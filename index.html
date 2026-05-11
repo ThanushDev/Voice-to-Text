@@ -3,232 +3,205 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FCBS Live Transcribe | Real-Time Typing</title>
+    <title>FCBS Studio Ultra | 1000% Sensitivity</title>
     
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
     <style>
         :root {
-            --bg: #030712;
-            --card: rgba(17, 24, 39, 0.7);
-            --primary: #818cf8;
-            --accent: #c084fc;
-            --border: rgba(255, 255, 255, 0.1);
+            --bg: #000000;
+            --primary: #6366f1;
+            --danger: #ef4444;
+            --text: #ffffff;
         }
 
         body {
-            margin: 0; background: var(--bg); color: #f3f4f6;
+            margin: 0; background: var(--bg); color: var(--text);
             font-family: 'Inter', sans-serif; display: flex; justify-content: center;
         }
 
-        .container { width: 95%; max-width: 800px; padding: 40px 10px; }
+        .container { width: 95%; max-width: 800px; padding: 30px 10px; }
 
-        .glass-card {
-            background: var(--card); backdrop-filter: blur(20px);
-            border: 1px solid var(--border); border-radius: 28px;
-            padding: 30px; box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+        .main-card {
+            background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 24px; padding: 25px; box-shadow: 0 0 40px rgba(99, 102, 241, 0.1);
         }
 
-        .gradient-text {
-            background: linear-gradient(135deg, var(--primary), var(--accent));
-            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-            font-weight: 900; font-size: 30px;
+        /* Power Meter */
+        .meter-box {
+            background: #0a0a0a; border: 1px solid #1f2937; border-radius: 15px;
+            padding: 15px; margin: 20px 0;
         }
-
-        /* Voice Meter */
-        .visualizer-box {
-            margin: 20px 0; background: rgba(0,0,0,0.3); padding: 15px; border-radius: 20px;
-        }
-        .bar-bg { height: 12px; background: #1f2937; border-radius: 6px; overflow: hidden; }
-        #bar-fill { 
+        .bar-outer { height: 14px; background: #111827; border-radius: 7px; overflow: hidden; }
+        #bar-inner { 
             height: 100%; width: 0%; background: linear-gradient(90deg, #6366f1, #a855f7);
-            box-shadow: 0 0 20px rgba(129, 140, 248, 0.6); transition: width 0.05s;
+            transition: width 0.05s ease-out; box-shadow: 0 0 15px var(--primary);
         }
 
-        /* Typing Box */
-        .type-area {
-            background: rgba(0,0,0,0.5); border: 1px solid var(--border);
-            border-radius: 20px; padding: 25px; min-height: 380px;
-            font-size: 20px; line-height: 1.8; color: #e5e7eb;
-            max-height: 500px; overflow-y: auto; white-space: pre-wrap;
-            position: relative;
+        /* Transcription Area */
+        #display {
+            background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 15px; padding: 20px; min-height: 350px; max-height: 500px;
+            overflow-y: auto; font-size: 19px; line-height: 1.8; color: #e5e7eb;
+            white-space: pre-wrap; outline: none;
         }
+        .ghost-text { color: var(--primary); border-right: 2px solid var(--primary); font-style: italic; }
 
-        /* The Live "Typing" Cursor Effect */
-        .interim-live {
-            color: var(--primary);
-            border-right: 3px solid var(--primary);
-            animation: blink 0.7s infinite;
-            padding-right: 2px;
-            font-style: italic;
-        }
-
-        @keyframes blink { 0%, 100% { border-color: transparent; } 50% { border-color: var(--primary); } }
-
-        .controls { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 10px; margin-top: 25px; }
+        .btn-grid { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 10px; margin-top: 20px; }
         .btn {
-            padding: 18px; border-radius: 16px; border: none; font-weight: 800;
-            cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;
-            transition: 0.3s; font-size: 14px;
+            padding: 18px; border-radius: 14px; border: none; font-weight: 800;
+            cursor: pointer; font-size: 14px; transition: 0.2s; color: white;
         }
-        .btn-start { background: var(--primary); color: white; }
-        .btn-stop { background: #ef4444; color: white; }
-        .btn-util { background: #374151; color: white; }
-        .btn:hover { transform: scale(1.02); filter: brightness(1.1); }
+        .btn-start { background: var(--primary); }
+        .btn-stop { background: var(--danger); }
+        .btn-util { background: #1f2937; }
+        .btn:active { transform: scale(0.96); }
 
-        .status { font-size: 12px; color: #9ca3af; margin-top: 15px; text-align: center; }
+        .info { font-size: 11px; color: #6b7280; text-align: center; margin-top: 20px; }
     </style>
 </head>
 <body>
 
     <div class="container">
-        <div class="glass-card">
-            <div style="margin-bottom: 20px;">
-                <span class="gradient-text">FCBS LIVE TYPING</span>
-                <p style="color: #6b7280; font-size: 13px; margin: 5px 0;">1000% Sensitive | Instant Transcription</p>
-            </div>
-
-            <div class="visualizer-box">
-                <div style="display:flex; justify-content:space-between; font-size:10px; margin-bottom:8px; font-weight:800;">
-                    <span>VOICE POWER</span>
-                    <span id="vol-num">0%</span>
-                </div>
-                <div class="bar-bg"><div id="bar-fill"></div></div>
-            </div>
-
-            <div id="transcript" class="type-area" contenteditable="false">Press Start and speak...</div>
-
-            <div class="controls">
-                <button id="main-btn" class="btn btn-start" onclick="toggleEngine()">
-                    <span id="btn-icon">🎤</span> <span id="btn-text">Start Session</span>
-                </button>
-                <button class="btn btn-util" onclick="exportToPDF()">📄 PDF</button>
-                <button class="btn btn-util" style="background:#1f2937" onclick="clearAll()">🗑️</button>
-            </div>
+        <div class="main-card">
+            <h1 style="margin:0; font-weight:900; letter-spacing:-1px;">FCBS <span style="color:var(--primary)">STUDIO PRO</span></h1>
             
-            <div class="status" id="status-msg">Status: WAITING</div>
+            <div class="meter-box">
+                <div style="display:flex; justify-content:space-between; font-size:10px; margin-bottom:8px; font-weight:bold;">
+                    <span>MIC SENSITIVITY (1000% BOOST)</span>
+                    <span id="vol-text">0%</span>
+                </div>
+                <div class="bar-outer"><div id="bar-inner"></div></div>
+            </div>
+
+            <div id="display">Press 'START' and speak clearly...</div>
+
+            <div class="btn-grid">
+                <button id="ctrl-btn" class="btn btn-start" onclick="toggleMain()">🎤 START SESSION</button>
+                <button class="btn btn-util" onclick="savePDF()">📄 PDF</button>
+                <button class="btn btn-util" onclick="location.reload()">🔄 RESET</button>
+            </div>
+
+            <div class="info" id="status">STATUS: DISCONNECTED</div>
         </div>
-        <div style="text-align: center; margin-top: 20px; color: #4b5563; font-size: 11px;">DIGI SOLUTIONS PRO</div>
+        <p class="info">DIGI SOLUTIONS | TECHNOLOGY FOR TRINCO</p>
     </div>
 
     <script>
-        let recognition;
-        let isRecording = false;
-        let final_text = "";
-        let audioCtx, analyser, microphone, gainNode;
+        let rec;
+        let active = false;
+        let finalText = "";
+        let aCtx, analyzer, source, processor;
 
+        // Initialize Speech Engine
         if ('webkitSpeechRecognition' in window) {
-            recognition = new webkitSpeechRecognition();
-            recognition.continuous = true;
-            recognition.interimResults = true; // MEKA THAMAI REAL-TIME TYPING KARANNE
+            rec = new webkitSpeechRecognition();
+            rec.continuous = true;
+            rec.interimResults = true;
+            rec.lang = 'en-US';
 
-            recognition.onresult = (event) => {
-                let interim_text = "";
-                for (let i = event.resultIndex; i < event.results.length; ++i) {
-                    if (event.results[i].isFinal) {
-                        final_text += event.results[i][0].transcript + " ";
+            rec.onresult = (e) => {
+                let interim = "";
+                for (let i = e.resultIndex; i < e.results.length; ++i) {
+                    if (e.results[i].isFinal) {
+                        finalText += e.results[i][0].transcript + " ";
                     } else {
-                        interim_text += event.results[i][0].transcript;
+                        interim += e.results[i][0].transcript;
                     }
                 }
-                
-                const box = document.getElementById('transcript');
-                // Real-time "Typing" display
-                box.innerHTML = final_text + '<span class="interim-live">' + interim_text + '</span>';
-                box.scrollTop = box.scrollHeight;
+                const screen = document.getElementById('display');
+                screen.innerHTML = finalText + '<span class="ghost-text">' + interim + '</span>';
+                screen.scrollTop = screen.scrollHeight;
             };
 
-            recognition.onend = () => { if (isRecording) recognition.start(); };
+            rec.onend = () => { if (active) rec.start(); };
+            rec.onerror = (e) => console.log("Engine Error: ", e.error);
         }
 
-        async function toggleEngine() {
-            const btn = document.getElementById('main-btn');
-            const status = document.getElementById('status-msg');
+        async function toggleMain() {
+            const btn = document.getElementById('ctrl-btn');
+            const status = document.getElementById('status');
 
-            if (!isRecording) {
+            if (!active) {
                 try {
-                    // 1000% Sensitivity Boost
+                    // Start Audio Context (Crucial for "Length/Meter" to work)
                     const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                    audioCtx = new AudioContext();
-                    analyser = audioCtx.createAnalyser();
-                    microphone = audioCtx.createMediaStreamSource(stream);
-                    gainNode = audioCtx.createGain();
+                    aCtx = new (window.AudioContext || window.webkitAudioContext)();
+                    analyzer = aCtx.createAnalyser();
+                    source = aCtx.createMediaStreamSource(stream);
                     
-                    gainNode.gain.value = 18; // Massive gain boost
-                    microphone.connect(gainNode);
-                    gainNode.connect(analyser);
+                    // Boost Input Signal
+                    const gainNode = aCtx.createGain();
+                    gainNode.gain.value = 20; // 20x Boost
                     
-                    startVisualizer();
+                    source.connect(gainNode);
+                    gainNode.connect(analyzer);
+                    
+                    startMeter();
 
-                    if(final_text === "" || document.getElementById('transcript').innerText.includes("Press Start")) {
-                        final_text = "";
+                    if(finalText === "" || document.getElementById('display').innerText.includes("Press 'START'")) {
+                        finalText = "";
+                        document.getElementById('display').innerHTML = "";
                     }
 
-                    recognition.start();
-                    isRecording = true;
+                    rec.start();
+                    active = true;
+                    btn.innerHTML = "🛑 STOP SESSION";
                     btn.className = "btn btn-stop";
-                    document.getElementById('btn-icon').innerText = "🛑";
-                    document.getElementById('btn-text').innerText = "Stop Session";
-                    status.innerText = "Status: TYPING LIVE...";
-                } catch (e) { alert("Microphone access needed!"); }
+                    status.innerText = "STATUS: LISTENING @ 1000% BOOST";
+                } catch (err) {
+                    alert("Mic Access Denied! Settings වලින් Mic එක On කරන්න.");
+                }
             } else {
-                stopEngine();
+                stopAll();
             }
         }
 
-        function stopEngine() {
-            isRecording = false;
-            recognition.stop();
-            if (audioCtx) audioCtx.close();
-            document.getElementById('main-btn').className = "btn btn-start";
-            document.getElementById('btn-icon').innerText = "🎤";
-            document.getElementById('btn-text').innerText = "Start Session";
-            document.getElementById('status-msg').innerText = "Status: STOPPED";
-            document.getElementById('bar-fill').style.width = "0%";
+        function stopAll() {
+            active = false;
+            rec.stop();
+            if(aCtx) aCtx.close();
+            const btn = document.getElementById('ctrl-btn');
+            btn.innerHTML = "🎤 START SESSION";
+            btn.className = "btn btn-start";
+            document.getElementById('status').innerText = "STATUS: STOPPED";
+            document.getElementById('bar-inner').style.width = "0%";
         }
 
-        function startVisualizer() {
-            const data = new Uint8Array(analyser.frequencyBinCount);
-            const loop = () => {
-                if (!isRecording) return;
-                analyser.getByteFrequencyData(data);
-                let sum = data.reduce((a, b) => a + b, 0);
-                let vol = Math.round(Math.min((sum / data.length) * 4, 100));
-                document.getElementById('bar-fill').style.width = vol + "%";
-                document.getElementById('vol-num').innerText = vol + "%";
-                requestAnimationFrame(loop);
+        function startMeter() {
+            const data = new Uint8Array(analyzer.frequencyBinCount);
+            const draw = () => {
+                if (!active) return;
+                analyzer.getByteFrequencyData(data);
+                let sum = 0;
+                for(let i=0; i<data.length; i++) sum += data[i];
+                let vol = Math.round((sum / data.length) * 5); // Sensitivity Scaling
+                if(vol > 100) vol = 100;
+                
+                document.getElementById('bar-inner').style.width = vol + "%";
+                document.getElementById('vol-text').innerText = vol + "%";
+                requestAnimationFrame(draw);
             };
-            loop();
+            draw();
         }
 
-        function clearAll() {
-            if(confirm("මකන්නද?")) {
-                final_text = "";
-                document.getElementById('transcript').innerHTML = "Press Start and speak...";
-            }
-        }
-
-        function exportToPDF() {
+        function savePDF() {
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF();
-            const text = document.getElementById('transcript').innerText;
-            if(text.length < 5) return;
-
-            doc.setFontSize(22);
-            doc.setTextColor(129, 140, 248);
-            doc.text("FCBS LECTURE NOTE", 20, 20);
+            const val = document.getElementById('display').innerText;
+            if(val.length < 2) return;
             
+            doc.setFontSize(20);
+            doc.text("FCBS LECTURE NOTES", 20, 20);
             doc.setFontSize(10);
-            doc.setTextColor(100);
             doc.text("Date: " + new Date().toLocaleString(), 20, 28);
             doc.line(20, 32, 190, 32);
-
+            
             doc.setFontSize(12);
-            doc.setTextColor(0);
-            const splitLines = doc.splitTextToSize(text, 170);
-            doc.text(splitLines, 20, 42);
-            doc.save("FCBS_Live_Note.pdf");
+            const lines = doc.splitTextToSize(val, 170);
+            doc.text(lines, 20, 45);
+            doc.save("Lecture_Note.pdf");
         }
     </script>
 </body>
