@@ -1,0 +1,189 @@
+:root {
+  --bg: #030712;
+  --card: rgba(255, 255, 255, 0.03);
+  --border: rgba(255, 255, 255, 0.08);
+  --primary: #6366f1;
+  --accent: #a855f7;
+  --text-main: #f8fafc;
+  --text-dim: #94a3b8;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background-color: var(--bg);
+  color: var(--text-main);
+  font-family: 'Inter', sans-serif;
+  overflow-x: hidden;
+}
+
+.main-wrapper {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+  position: relative;
+}
+
+/* Background Animated Blobs */
+.bg-blobs .blob {
+  position: absolute;
+  width: 300px;
+  height: 300px;
+  background: var(--primary);
+  filter: blur(120px);
+  opacity: 0.15;
+  z-index: -1;
+  border-radius: 50%;
+}
+
+.blob-1 { top: 10%; left: 20%; animation: move 10s infinite alternate; }
+.blob-2 { bottom: 10%; right: 20%; background: var(--accent) !important; animation: move 12s infinite alternate-reverse; }
+
+@keyframes move {
+  from { transform: translate(0, 0); }
+  to { transform: translate(50px, 100px); }
+}
+
+.glass-container {
+  background: var(--card);
+  backdrop-filter: blur(20px);
+  border: 1px solid var(--border);
+  border-radius: 32px;
+  padding: 48px;
+  width: 100%;
+  max-width: 680px;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(99, 102, 241, 0.1);
+  color: #818cf8;
+  padding: 6px 14px;
+  border-radius: 100px;
+  font-size: 12px;
+  font-weight: 600;
+  margin-bottom: 16px;
+}
+
+.header h1 { font-size: 36px; margin: 0; font-weight: 800; }
+.header p { color: var(--text-dim); margin: 12px 0 32px 0; line-height: 1.6; }
+
+.gradient-text {
+  background: linear-gradient(135deg, #818cf8 0%, #c084fc 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.selector-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(255, 255, 255, 0.05);
+  padding: 8px 16px;
+  border-radius: 12px;
+}
+
+.selector-group select {
+  background: transparent;
+  color: white;
+  border: none;
+  outline: none;
+  cursor: pointer;
+}
+
+.status {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-dim);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pulse-dot { width: 8px; height: 8px; background: #475569; border-radius: 50%; }
+.active .pulse-dot { background: #10b981; box-shadow: 0 0 12px #10b981; animation: pulse 1.5s infinite; }
+
+@keyframes pulse {
+  0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; }
+}
+
+.transcript-wrapper {
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 24px;
+  min-height: 220px;
+  margin-bottom: 32px;
+}
+
+.content-area { line-height: 1.8; color: #e2e8f0; font-size: 16px; }
+.placeholder { color: #475569; font-style: italic; }
+
+.button-grid { display: flex; gap: 16px; align-items: center; }
+
+.btn-main {
+  flex: 1;
+  background: var(--primary);
+  color: white;
+  border: none;
+  padding: 16px;
+  border-radius: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  box-shadow: 0 10px 15px -3px rgba(99, 102, 241, 0.3);
+}
+
+.btn-danger {
+  flex: 1;
+  background: #ef4444;
+  color: white;
+  border: none;
+  padding: 16px;
+  border-radius: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+}
+
+.utility-buttons { display: flex; gap: 8px; }
+
+.btn-sub {
+  background: var(--card);
+  border: 1px solid var(--border);
+  color: white;
+  padding: 14px;
+  border-radius: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-sub:hover { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.2); }
+
+.footer { margin-top: 40px; font-size: 12px; color: #475569; letter-spacing: 1px; }
+
+@media (max-width: 600px) {
+  .glass-container { padding: 24px; }
+  .button-grid { flex-direction: column; }
+  .utility-buttons { width: 100%; justify-content: center; }
+}
