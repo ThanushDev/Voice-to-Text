@@ -3,217 +3,228 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FCBS Studio Raw Transcribe</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
+    <title>FCBS STUDIO ULTRA PRO | DIGI SOLUTIONS</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;900&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
     <style>
         :root {
-            --bg: #050505;
-            --primary: #818cf8;
-            --danger: #f43f5e;
-            --card: #111111;
+            --primary: #6366f1;
+            --accent: #d946ef;
+            --bg: #030303;
+            --card: #0f0f0f;
+            --border: #262626;
         }
 
         body {
-            margin: 0; background: var(--bg); color: #fff;
+            margin: 0; background-color: var(--bg); color: #fff;
             font-family: 'Inter', sans-serif; display: flex; justify-content: center;
         }
 
-        .container { width: 95%; max-width: 850px; padding: 30px 10px; }
+        .container { width: 95%; max-width: 900px; padding: 40px 10px; }
 
         .glass-card {
-            background: var(--card); border: 1px solid #222;
-            border-radius: 24px; padding: 25px; box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+            background: var(--card); border: 1px solid var(--border);
+            border-radius: 30px; padding: 35px; box-shadow: 0 25px 60px rgba(0,0,0,0.8);
         }
 
-        .header h1 { font-size: 28px; margin: 0; font-weight: 900; letter-spacing: -1px; color: var(--primary); }
-
-        /* RAW Voice Meter */
-        .meter-box {
-            background: #000; border: 1px solid #333; border-radius: 16px;
-            padding: 15px; margin: 20px 0;
-        }
-        .bar-outer { height: 12px; background: #111; border-radius: 6px; overflow: hidden; }
-        #bar-inner { 
-            height: 100%; width: 0%; background: linear-gradient(90deg, #818cf8, #c084fc);
-            transition: width 0.05s ease; box-shadow: 0 0 15px var(--primary);
+        .header h1 { font-size: 32px; margin: 0; font-weight: 900; letter-spacing: -1.5px; }
+        .gradient-text {
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
         }
 
-        /* Transcription Box */
-        #display {
-            background: #000; border: 1px solid #222; border-radius: 16px;
-            padding: 20px; min-height: 400px; max-height: 550px;
-            overflow-y: auto; font-size: 19px; line-height: 1.8; color: #ddd;
-            white-space: pre-wrap; outline: none; position: relative;
+        /* Logic for "Length/Meter" to work */
+        .meter-wrapper {
+            background: #000; border: 1px solid var(--border);
+            border-radius: 20px; padding: 20px; margin: 25px 0;
         }
-        .typing-ghost { 
-            color: var(--primary); font-style: italic; 
-            border-right: 2px solid var(--primary); animation: blink 0.6s infinite;
+        .bar-container { height: 12px; background: #171717; border-radius: 6px; overflow: hidden; position: relative; }
+        #bar-fill { 
+            height: 100%; width: 0%; background: linear-gradient(90deg, var(--primary), var(--accent));
+            box-shadow: 0 0 20px rgba(99, 102, 241, 0.4); transition: width 0.05s;
+        }
+
+        /* Transcription Engine Output */
+        .output-box {
+            background: #050505; border: 1px solid var(--border);
+            border-radius: 20px; padding: 30px; min-height: 450px;
+            font-size: 20px; line-height: 1.9; color: #e5e5e5;
+            outline: none; max-height: 600px; overflow-y: auto;
+            white-space: pre-wrap; position: relative;
+        }
+        .live-ghost { 
+            color: var(--primary); font-style: italic; font-weight: 500;
+            border-right: 3px solid var(--primary); animation: blink 0.7s infinite;
         }
         @keyframes blink { 50% { border-color: transparent; } }
 
-        .btn-row { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 10px; margin-top: 25px; }
+        .controls { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 15px; margin-top: 30px; }
         .btn {
-            padding: 18px; border-radius: 14px; border: none; font-weight: 800;
-            cursor: pointer; font-size: 14px; transition: 0.2s; color: white;
+            padding: 20px; border-radius: 18px; border: none; font-weight: 800;
+            cursor: pointer; font-size: 14px; transition: 0.3s; color: white;
         }
-        .btn-start { background: var(--primary); }
-        .btn-stop { background: var(--danger); }
-        .btn-util { background: #222; border: 1px solid #333; }
+        .btn-start { background: var(--primary); box-shadow: 0 10px 25px rgba(99, 102, 241, 0.3); }
+        .btn-stop { background: #ef4444; }
+        .btn-util { background: #1a1a1a; border: 1px solid var(--border); }
         
-        .status-info { font-size: 11px; color: #555; text-align: center; margin-top: 20px; letter-spacing: 1px; }
+        .btn:hover { transform: translateY(-3px); filter: brightness(1.2); }
+
+        select {
+            background: #1a1a1a; color: white; border: 1px solid var(--border);
+            padding: 10px; border-radius: 10px; margin-bottom: 15px; width: 100%; outline: none;
+        }
     </style>
 </head>
 <body>
 
     <div class="container">
         <div class="glass-card">
-            <div class="header">
-                <h1>FCBS <span style="color:#fff">RAW AUDIO MODE</span></h1>
-                <p style="font-size:12px; color:#555; margin:5px 0;">NOISE FILTERS DISABLED | ULTRA SENSITIVE V5</p>
-            </div>
-
-            <div class="meter-box">
-                <div style="display:flex; justify-content:space-between; font-size:10px; margin-bottom:8px; font-weight:900;">
-                    <span>RAW SIGNAL STRENGTH</span>
-                    <span id="vol-per">0%</span>
+            <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                <div>
+                    <h1>FCBS <span class="gradient-text">ULTRA SENSE</span></h1>
+                    <p style="color:#525252; font-size:12px; margin:5px 0;">RAW AUDIO CAPTURE | 1000% SENSITIVITY</p>
                 </div>
-                <div class="bar-outer"><div id="bar-inner"></div></div>
+                <div style="text-align:right; font-size:10px; color:#404040;">2026 PRO EDITION</div>
             </div>
 
-            <div id="display">Tap START. No filters, just raw voice-to-text...</div>
-
-            <div class="btn-row">
-                <button id="main-btn" class="btn btn-start" onclick="toggleEngine()">🎤 START REC</button>
-                <button class="btn btn-util" onclick="downloadPDF()">📄 PDF</button>
-                <button class="btn btn-util" onclick="clearDisplay()">🗑️</button>
+            <div class="meter-wrapper">
+                <div style="display:flex; justify-content:space-between; font-size:11px; margin-bottom:10px; font-weight:900;">
+                    <span>VOICE INPUT POWER</span>
+                    <span id="vol-num">0%</span>
+                </div>
+                <div class="bar-container"><div id="bar-fill"></div></div>
             </div>
 
-            <div class="status-info" id="status">STATUS: STANDBY</div>
+            <select id="lang-set">
+                <option value="en-US">Target: English Lecture</option>
+                <option value="si-LK">Target: Sinhala Lecture</option>
+            </select>
+
+            <div id="display" class="output-box" contenteditable="true">Ready for session. Tap 'START' to capture raw audio...</div>
+
+            <div class="controls">
+                <button id="main-btn" class="btn btn-start" onclick="startEngine()">🎤 START ENGINE</button>
+                <button class="btn btn-util" onclick="exportPDF()">📄 SAVE PDF</button>
+                <button class="btn btn-util" style="color:#ef4444" onclick="location.reload()">🔄 RESET</button>
+            </div>
+            
+            <p id="status-text" style="text-align:center; font-size:11px; color:#404040; margin-top:20px;">ENGINE STATUS: IDLE</p>
         </div>
-        <p class="status-info">DEVELOPED BY DIGI SOLUTIONS | MR.THANUSH</p>
+        <footer style="text-align:center; margin-top:30px; font-size:12px; color:#262626;">DEVELOPED BY MR.THANUSH | DIGI SOLUTIONS</footer>
     </div>
 
     <script>
-        let recognition;
-        let isActive = false;
-        let fullText = "";
-        let aCtx, analyzer, source;
+        let rec;
+        let isRunning = false;
+        let finalOutput = "";
+        let audioCtx, analyzer, micSource, boostNode;
 
         if ('webkitSpeechRecognition' in window) {
-            recognition = new webkitSpeechRecognition();
-            recognition.continuous = true;
-            recognition.interimResults = true;
-            recognition.lang = 'en-US';
+            rec = new webkitSpeechRecognition();
+            rec.continuous = true;
+            rec.interimResults = true;
 
-            recognition.onresult = (e) => {
+            rec.onresult = (event) => {
                 let interim = "";
-                for (let i = e.resultIndex; i < e.results.length; ++i) {
-                    if (e.results[i].isFinal) {
-                        fullText += e.results[i][0].transcript + " ";
+                for (let i = event.resultIndex; i < event.results.length; ++i) {
+                    if (event.results[i].isFinal) {
+                        finalOutput += event.results[i][0].transcript + " ";
                     } else {
-                        interim += e.results[i][0].transcript;
+                        interim += event.results[i][0].transcript;
                     }
                 }
-                const box = document.getElementById('display');
-                box.innerHTML = fullText + '<span class="typing-ghost">' + interim + '</span>';
-                box.scrollTop = box.scrollHeight;
+                const screen = document.getElementById('display');
+                screen.innerHTML = finalOutput + '<span class="live-ghost">' + interim + '</span>';
+                screen.scrollTop = screen.scrollHeight;
             };
 
-            recognition.onend = () => { if (isActive) recognition.start(); };
+            rec.onend = () => { if (isRunning) rec.start(); };
+            rec.onerror = (e) => { console.error("Engine Sync Error: ", e.error); };
         }
 
-        async function toggleEngine() {
+        async function startEngine() {
             const btn = document.getElementById('main-btn');
-            if (!isActive) {
+            if (!isRunning) {
                 try {
-                    // FORCE RAW AUDIO - ALL FILTERS OFF
+                    // RAW AUDIO - DISABLE FILTERS THAT KILL WEAK VOICE
                     const stream = await navigator.mediaDevices.getUserMedia({ 
-                        audio: {
-                            echoCancellation: false,
-                            noiseSuppression: false,
-                            autoGainControl: true 
-                        } 
+                        audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: true } 
                     });
 
-                    aCtx = new (window.AudioContext || window.webkitAudioContext)();
-                    analyzer = aCtx.createAnalyser();
-                    source = aCtx.createMediaStreamSource(stream);
+                    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                    analyzer = audioCtx.createAnalyser();
+                    micSource = audioCtx.createMediaStreamSource(stream);
+                    boostNode = audioCtx.createGain();
                     
-                    // Boost Weak Signals (1000% Gain)
-                    const gain = aCtx.createGain();
-                    gain.gain.value = 15; 
+                    boostNode.gain.value = 25; // 1000% Boost for weak signals
+                    micSource.connect(boostNode);
+                    boostNode.connect(analyzer);
                     
-                    source.connect(gain);
-                    gain.connect(analyzer);
-                    
-                    startVisualizer();
+                    visualize();
 
-                    if(document.getElementById('display').innerText.includes("Tap START")) {
+                    if(document.getElementById('display').innerText.includes("Ready for session")) {
                         document.getElementById('display').innerHTML = "";
+                        finalOutput = "";
                     }
 
-                    recognition.start();
-                    isActive = true;
-                    btn.innerText = "🛑 STOP SESSION";
+                    rec.lang = document.getElementById('lang-set').value;
+                    rec.start();
+                    isRunning = true;
+                    btn.innerText = "🛑 STOP ENGINE";
                     btn.className = "btn btn-stop";
-                    document.getElementById('status').innerText = "STATUS: RAW MODE ACTIVE";
-                } catch (err) { alert("Mic Permission Denied!"); }
+                    document.getElementById('status-text').innerText = "ENGINE STATUS: CAPTURING RAW AUDIO";
+                } catch (e) { alert("Please allow Mic Access!"); }
             } else {
-                stopAll();
+                stopEngine();
             }
         }
 
-        function stopAll() {
-            isActive = false;
-            recognition.stop();
-            if(aCtx) aCtx.close();
+        function stopEngine() {
+            isRunning = false;
+            rec.stop();
+            if(audioCtx) audioCtx.close();
             const btn = document.getElementById('main-btn');
-            btn.innerText = "🎤 START REC";
+            btn.innerText = "🎤 START ENGINE";
             btn.className = "btn btn-start";
-            document.getElementById('status').innerText = "STATUS: IDLE";
-            document.getElementById('bar-inner').style.width = "0%";
+            document.getElementById('status-text').innerText = "ENGINE STATUS: STOPPED";
+            document.getElementById('bar-fill').style.width = "0%";
         }
 
-        function startVisualizer() {
+        function visualize() {
             const data = new Uint8Array(analyzer.frequencyBinCount);
             const loop = () => {
-                if (!isActive) return;
+                if (!isRunning) return;
                 analyzer.getByteFrequencyData(data);
                 let sum = 0;
                 for(let i=0; i<data.length; i++) sum += data[i];
-                let val = Math.round((sum / data.length) * 4);
-                if(val > 100) val = 100;
-                document.getElementById('bar-inner').style.width = val + "%";
-                document.getElementById('vol-per').innerText = val + "%";
+                let vol = Math.round(Math.min((sum / data.length) * 5, 100));
+                document.getElementById('bar-fill').style.width = vol + "%";
+                document.getElementById('vol-num').innerText = vol + "%";
                 requestAnimationFrame(loop);
             };
             loop();
         }
 
-        function clearDisplay() {
-            if(confirm("මකන්නද?")) {
-                fullText = "";
-                document.getElementById('display').innerHTML = "";
-            }
-        }
-
-        function downloadPDF() {
+        function exportPDF() {
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF();
-            const val = document.getElementById('display').innerText;
-            if(val.length < 5) return;
+            const text = document.getElementById('display').innerText;
+            if(text.length < 5) return;
             
-            doc.setFontSize(20);
-            doc.text("FCBS LECTURE NOTES (RAW)", 20, 20);
+            doc.setFontSize(22);
+            doc.setTextColor(99, 102, 241);
+            doc.text("FCBS LECTURE TRANSCRIPT", 20, 20);
             doc.setFontSize(10);
-            doc.text("Generated: " + new Date().toLocaleString(), 20, 28);
+            doc.setTextColor(100);
+            doc.text("Date: " + new Date().toLocaleString(), 20, 28);
             doc.line(20, 32, 190, 32);
-            
             doc.setFontSize(12);
-            const lines = doc.splitTextToSize(val, 170);
-            doc.text(lines, 20, 45);
-            doc.save("FCBS_Raw_Note.pdf");
+            doc.setTextColor(0);
+            const lines = doc.splitTextToSize(text, 170);
+            doc.text(lines, 20, 42);
+            doc.save("FCBS_Transcript.pdf");
         }
     </script>
 </body>
