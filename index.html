@@ -3,8 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FCBS Studio Transcribe | Digi Solutions</title>
-    <!-- Thush.lk style fonts and UI libraries -->
+    <title>FCBS Studio Transcribe | Ultra Sensitive Edition</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
@@ -26,7 +25,6 @@
             min-height: 100vh; overflow-x: hidden;
         }
 
-        /* Animated Background Blobs */
         .blob {
             position: fixed; width: 400px; height: 400px; background: var(--primary);
             filter: blur(140px); opacity: 0.12; z-index: -1; border-radius: 50%;
@@ -49,27 +47,23 @@
             -webkit-background-clip: text; -webkit-text-fill-color: transparent;
         }
 
-        /* Output Area */
-        .output-container { position: relative; margin: 25px 0; }
+        /* Sensitivity Meter */
+        .sensitivity-panel {
+            background: rgba(0,0,0,0.3); border-radius: 12px; padding: 10px 15px;
+            margin: 15px 0; border: 1px solid var(--border); width: 100%;
+        }
+        .meter-container { height: 6px; background: #1e293b; border-radius: 10px; overflow: hidden; margin-top: 5px; }
+        #meter-fill { height: 100%; width: 0%; background: var(--primary); transition: width 0.1s; }
+
+        .output-container { position: relative; margin: 20px 0; }
         
         #transcript {
             background: rgba(0,0,0,0.4); border: 1px solid var(--border);
             border-radius: 20px; padding: 25px; min-height: 300px;
-            font-size: 17px; line-height: 1.8; color: #e2e8f0;
-            outline: none; transition: 0.3s; max-height: 500px; overflow-y: auto;
-            white-space: pre-wrap;
+            font-size: 18px; line-height: 1.8; color: #e2e8f0;
+            outline: none; max-height: 500px; overflow-y: auto; white-space: pre-wrap;
         }
 
-        #transcript:focus { border-color: var(--primary); box-shadow: 0 0 20px rgba(99, 102, 241, 0.1); }
-
-        .edit-badge {
-            position: absolute; top: 15px; right: 15px;
-            background: var(--primary); font-size: 10px; padding: 4px 10px;
-            border-radius: 20px; opacity: 0; transition: 0.3s; pointer-events: none;
-        }
-        .editing .edit-badge { opacity: 1; }
-
-        /* Controls Grid */
         .controls-grid { 
             display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 10px; width: 100%; 
         }
@@ -77,108 +71,85 @@
         .btn {
             padding: 16px 8px; border-radius: 16px; border: none; font-weight: 700;
             cursor: pointer; display: flex; align-items: center; justify-content: center;
-            gap: 6px; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); color: white;
-            font-size: 14px;
+            gap: 6px; transition: 0.3s; color: white; font-size: 14px;
         }
 
-        .btn-start { background: var(--primary); box-shadow: 0 10px 20px rgba(99, 102, 241, 0.2); }
-        .btn-stop { background: var(--danger); box-shadow: 0 10px 20px rgba(239, 68, 68, 0.2); }
+        .btn-start { background: var(--primary); }
+        .btn-stop { background: var(--danger); }
         .btn-utility { background: rgba(255,255,255,0.05); border: 1px solid var(--border); }
-        .btn-utility:hover { background: rgba(255,255,255,0.1); border-color: var(--primary); }
         .btn-pdf { background: #10b981; }
-        .btn-clear { background: rgba(255, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.2); color: #ef4444; }
-        .btn-clear:hover { background: rgba(239, 68, 68, 0.2); border-color: #ef4444; }
-
-        .btn:active { transform: scale(0.96); }
-
-        .status-info {
-            display: flex; justify-content: space-between; width: 100%;
-            font-size: 12px; color: var(--text-dim); margin-bottom: 12px;
-        }
 
         .pulse-icon {
-            width: 10px; height: 10px; background: var(--danger); border-radius: 50%;
-            display: inline-block; margin-right: 8px; animation: pulse 1.5s infinite;
+            width: 10px; height: 10px; background: #ef4444; border-radius: 50%;
+            display: inline-block; margin-right: 8px; animation: pulse 1s infinite;
         }
 
         @keyframes pulse {
             0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
-            70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
-            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+            100% { transform: scale(1); box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
         }
 
-        footer { margin-top: 40px; font-size: 12px; color: #475569; text-align: center; }
-
-        /* Mobile Optimization */
         @media (max-width: 650px) {
             .controls-grid { grid-template-columns: 1fr 1fr; }
             .btn-start, .btn-stop { grid-column: span 2; }
-            .glass-card { padding: 25px 15px; }
         }
     </style>
 </head>
 <body>
 
     <div class="blob" style="top: -10%; left: -10%;"></div>
-    <div class="blob" style="bottom: -10%; right: -10%; background: var(--accent);"></div>
-
     <div class="container">
-        <div class="glass-card" id="card">
+        <div class="glass-card">
             <div class="header">
-                <h1>FCBS <span class="gradient-text">Studio Transcribe</span></h1>
-                <p style="font-size: 14px; color: var(--text-dim); margin: 8px 0 0 0;">Persistence Focus Mode | FCBS DIGI KUPPIYA</p>
+                <h1>FCBS <span class="gradient-text">Pro Transcribe</span></h1>
+                <p style="font-size: 13px; color: var(--text-dim); margin-top: 5px;">Ultra Sensitive Mode | DIGI SOLUTIONS</p>
             </div>
 
-            <div class="output-container" id="output-box">
-                <div class="edit-badge">EDIT MODE</div>
+            <!-- Sensitivity Visualizer -->
+            <div class="sensitivity-panel">
+                <div style="display:flex; justify-content:space-between; font-size:11px;">
+                    <span>VOICE INPUT STRENGTH</span>
+                    <span id="vol-value">0%</span>
+                </div>
+                <div class="meter-container"><div id="meter-fill"></div></div>
+            </div>
+
+            <div class="output-container">
                 <div id="transcript" contenteditable="false">Your session text will appear here. Press Start...</div>
             </div>
 
-            <div class="status-info">
+            <div style="display:flex; justify-content:space-between; font-size:12px; color:var(--text-dim); margin-bottom:15px;">
                 <div id="status-text">Status: IDLE</div>
-                <div id="timer">Manual Stop Required</div>
+                <div>DIGI SOLUTIONS</div>
             </div>
 
             <div class="controls-grid">
                 <button id="main-btn" class="btn btn-start" onclick="handleMainAction()">
-                    <span id="btn-icon">🎤</span> <span id="btn-text">Start</span>
+                    <span id="btn-icon">🎤</span> <span id="btn-text">Start Session</span>
                 </button>
                 <button class="btn btn-utility" onclick="toggleEdit()">
                     <span id="edit-icon">✏️</span> <span id="edit-text">Edit</span>
                 </button>
-                <button class="btn btn-pdf" onclick="saveAsPDF()">
-                    📄 PDF
-                </button>
-                <button class="btn btn-clear" onclick="clearTranscript()">
-                    🗑️ Clear
-                </button>
+                <button class="btn btn-pdf" onclick="saveAsPDF()">📄 PDF</button>
+                <button class="btn btn-utility" style="color:var(--danger)" onclick="clearTranscript()">🗑️ Clear</button>
             </div>
         </div>
-
-        <footer>
-            DIGI SOLUTIONS &copy; 2026 | DEVELOPED BY MR.THANUSH
-        </footer>
+        <footer style="margin-top:20px; color:#475569; font-size:12px;">DEVELOPED BY MR.THANUSH &copy; 2026</footer>
     </div>
 
     <script>
         let recognition;
         let isRecording = false;
-        let isEditing = false;
         let final_transcript = ""; 
+        let audioContext, analyser, microphone, scriptNode;
 
-        if (!('webkitSpeechRecognition' in window) && !('speechRecognition' in window)) {
-            alert("Mchn, use Google Chrome for 100% performance!");
-        } else {
-            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-            recognition = new SpeechRecognition();
-
+        // Initialize Speech Engine
+        if ('webkitSpeechRecognition' in window || 'speechRecognition' in window) {
+            const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+            recognition = new SpeechRec();
             recognition.continuous = true;
             recognition.interimResults = true;
             recognition.lang = 'en-US'; 
-
-            recognition.onstart = () => {
-                document.getElementById('status-text').innerHTML = `<span class="pulse-icon"></span> LISTENING...`;
-            };
 
             recognition.onresult = (event) => {
                 let interim_transcript = "";
@@ -189,76 +160,87 @@
                         interim_transcript += event.results[i][0].transcript;
                     }
                 }
-                
                 document.getElementById('transcript').innerHTML = 
-                    final_transcript + '<span style="color: #818cf8; opacity: 0.7">' + interim_transcript + '</span>';
+                    final_transcript + '<span style="color: #818cf8; opacity: 0.9">' + interim_transcript + '</span>';
                 
                 const box = document.getElementById('transcript');
                 box.scrollTop = box.scrollHeight;
             };
 
-            recognition.onend = () => {
-                if (isRecording) {
-                    recognition.start();
-                } else {
-                    document.getElementById('status-text').innerText = "Status: STOPPED";
-                }
-            };
+            recognition.onend = () => { if (isRecording) recognition.start(); };
+        }
 
-            recognition.onerror = (e) => {
-                console.log("Recognition error: " + e.error);
-            };
+        // 1000% Gain & Visualizer Logic
+        async function startAudioBoost() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                analyser = audioContext.createAnalyser();
+                microphone = audioContext.createMediaStreamSource(stream);
+                
+                // Gain Node to amplify silent voice
+                const gainNode = audioContext.createGain();
+                gainNode.gain.value = 10; // Boosted 10 times
+
+                scriptNode = audioContext.createScriptProcessor(2048, 1, 1);
+                analyser.smoothingTimeConstant = 0.8;
+                analyser.fftSize = 1024;
+
+                microphone.connect(gainNode);
+                gainNode.connect(analyser);
+                analyser.connect(scriptNode);
+                scriptNode.connect(audioContext.destination);
+
+                scriptNode.onaudioprocess = () => {
+                    const array = new Uint8Array(analyser.frequencyBinCount);
+                    analyser.getByteFrequencyData(array);
+                    let values = 0;
+                    for (let i = 0; i < array.length; i++) values += array[i];
+                    let average = (values / array.length);
+                    let volume = Math.round(Math.min(average * 2, 100));
+                    document.getElementById('meter-fill').style.width = volume + "%";
+                    document.getElementById('vol-value').innerText = volume + "%";
+                };
+            } catch (err) {
+                console.error("Mic gain failed:", err);
+            }
         }
 
         function handleMainAction() {
-            const btn = document.getElementById('main-btn');
-            const btnText = document.getElementById('btn-text');
-            const btnIcon = document.getElementById('btn-icon');
-            const transcriptDiv = document.getElementById('transcript');
-
             if (!isRecording) {
                 isRecording = true;
-                if(final_transcript.trim() === "" || transcriptDiv.innerText.includes("Press Start...")) transcriptDiv.innerText = "";
+                if(final_transcript.trim() === "" || document.getElementById('transcript').innerText.includes("Press Start")) {
+                    document.getElementById('transcript').innerText = "";
+                }
                 recognition.start();
-                btn.className = "btn btn-stop";
-                btnText.innerText = "Stop";
-                btnIcon.innerText = "🛑";
+                startAudioBoost();
+                document.getElementById('main-btn').className = "btn btn-stop";
+                document.getElementById('btn-text').innerText = "Stop Session";
+                document.getElementById('btn-icon').innerText = "🛑";
+                document.getElementById('status-text').innerHTML = `<span class="pulse-icon"></span> LISTENING (MAX SENSITIVE)`;
             } else {
                 isRecording = false;
                 recognition.stop();
-                btn.className = "btn btn-start";
-                btnText.innerText = "Start";
-                btnIcon.innerText = "🎤";
+                if (audioContext) audioContext.close();
+                document.getElementById('main-btn').className = "btn btn-start";
+                document.getElementById('btn-text').innerText = "Start Session";
+                document.getElementById('btn-icon').innerText = "🎤";
+                document.getElementById('status-text').innerText = "Status: STOPPED";
+                document.getElementById('meter-fill').style.width = "0%";
             }
         }
 
         function toggleEdit() {
             const div = document.getElementById('transcript');
-            const btnText = document.getElementById('edit-text');
-            const icon = document.getElementById('edit-icon');
-            const box = document.getElementById('output-box');
-
-            isEditing = !isEditing;
-            div.contentEditable = isEditing;
-            
-            if (isEditing) {
-                box.classList.add('editing');
-                btnText.innerText = "Save";
-                icon.innerText = "💾";
-                div.focus();
-            } else {
-                box.classList.remove('editing');
-                btnText.innerText = "Edit";
-                icon.innerText = "✏️";
-                final_transcript = div.innerText.trim() + " ";
-            }
+            div.contentEditable = (div.contentEditable === 'false');
+            div.style.background = (div.contentEditable === 'true') ? "rgba(99, 102, 241, 0.05)" : "rgba(0,0,0,0.4)";
+            if(div.contentEditable === 'false') final_transcript = div.innerText.trim() + " ";
         }
 
         function clearTranscript() {
-            if (confirm("Are you sure you want to clear all text? This cannot be undone.")) {
+            if (confirm("Clear notes?")) {
                 final_transcript = "";
                 document.getElementById('transcript').innerText = "Your session text will appear here. Press Start...";
-                document.getElementById('status-text').innerText = "Status: CLEARED";
             }
         }
 
@@ -266,30 +248,14 @@
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF();
             const text = document.getElementById('transcript').innerText;
-            
-            if(text.includes("Press Start...") || text.trim() === "") {
-                alert("Mchn, there is no text to save!");
-                return;
-            }
-
-            doc.setFont("helvetica", "bold");
-            doc.setFontSize(22);
+            if(!text || text.includes("Press Start")) return;
+            doc.setFontSize(20);
             doc.setTextColor(99, 102, 241);
-            doc.text("Lecture Transcript", 20, 20);
-            
-            doc.setFontSize(10);
-            doc.setTextColor(150);
-            doc.text("Generated by FCBS Smart Tool | " + new Date().toLocaleString(), 20, 30);
-            
-            doc.line(20, 35, 190, 35);
-            
-            doc.setFont("helvetica", "normal");
+            doc.text("Lecture Note", 20, 20);
             doc.setFontSize(12);
-            doc.setTextColor(40);
-            
-            const splitText = doc.splitTextToSize(text, 170);
-            doc.text(splitText, 20, 45);
-            
+            doc.setTextColor(0);
+            const lines = doc.splitTextToSize(text, 170);
+            doc.text(lines, 20, 40);
             doc.save("FCBS_Lecture_Note.pdf");
         }
     </script>
