@@ -1,1 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FCBS Voice Transcribe</title>
+    <!-- Inter Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        /* Mama deepu App.css code eka methanata paste karanna */
+        body { background: #030712; color: white; font-family: 'Inter', sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
+        .glass-card { background: rgba(255,255,255,0.03); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.1); border-radius: 32px; padding: 40px; width: 90%; max-width: 600px; text-align: center; }
+        .btn { background: #6366f1; border: none; color: white; padding: 15px 30px; border-radius: 12px; cursor: pointer; font-weight: 600; margin-top: 20px; }
+        #transcript { background: rgba(0,0,0,0.2); border-radius: 15px; padding: 20px; min-height: 150px; margin-top: 20px; text-align: left; }
+    </style>
+</head>
+<body>
+    <div class="glass-card">
+        <h1>FCBS <span style="color: #818cf8;">Transcribe</span></h1>
+        <p>Convert your lectures to text instantly.</p>
+        <div id="status">Status: Ready</div>
+        <div id="transcript">Your transcript will appear here...</div>
+        <button class="btn" onclick="startConverting()">Start Recording</button>
+    </div>
 
+    <script>
+        // Local browser logic for Speech Recognition
+        const transcriptDiv = document.getElementById('transcript');
+        const statusDiv = document.getElementById('status');
+
+        function startConverting() {
+            if ('webkitSpeechRecognition' in window) {
+                const speechRecognizer = new webkitSpeechRecognition();
+                speechRecognizer.continuous = true;
+                speechRecognizer.interimResults = true;
+                speechRecognizer.lang = 'en-US';
+                
+                speechRecognizer.start();
+                statusDiv.innerHTML = "Status: Listening...";
+
+                speechRecognizer.onresult = function(event) {
+                    let interimTranscript = '';
+                    for (let i = event.resultIndex; i < event.results.length; i++) {
+                        const transcript = event.results[i][0].transcript;
+                        if (event.results[i].isFinal) {
+                            transcriptDiv.innerHTML = transcript;
+                        } else {
+                            interimTranscript += transcript;
+                        }
+                    }
+                };
+            } else {
+                alert("Your browser does not support speech recognition.");
+            }
+        }
+    </script>
+</body>
+</html>
