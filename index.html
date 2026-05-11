@@ -3,205 +3,217 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FCBS Studio Ultra | 1000% Sensitivity</title>
-    
+    <title>FCBS Studio Raw Transcribe</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-
     <style>
         :root {
-            --bg: #000000;
-            --primary: #6366f1;
-            --danger: #ef4444;
-            --text: #ffffff;
+            --bg: #050505;
+            --primary: #818cf8;
+            --danger: #f43f5e;
+            --card: #111111;
         }
 
         body {
-            margin: 0; background: var(--bg); color: var(--text);
+            margin: 0; background: var(--bg); color: #fff;
             font-family: 'Inter', sans-serif; display: flex; justify-content: center;
         }
 
-        .container { width: 95%; max-width: 800px; padding: 30px 10px; }
+        .container { width: 95%; max-width: 850px; padding: 30px 10px; }
 
-        .main-card {
-            background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 24px; padding: 25px; box-shadow: 0 0 40px rgba(99, 102, 241, 0.1);
+        .glass-card {
+            background: var(--card); border: 1px solid #222;
+            border-radius: 24px; padding: 25px; box-shadow: 0 20px 50px rgba(0,0,0,0.5);
         }
 
-        /* Power Meter */
+        .header h1 { font-size: 28px; margin: 0; font-weight: 900; letter-spacing: -1px; color: var(--primary); }
+
+        /* RAW Voice Meter */
         .meter-box {
-            background: #0a0a0a; border: 1px solid #1f2937; border-radius: 15px;
+            background: #000; border: 1px solid #333; border-radius: 16px;
             padding: 15px; margin: 20px 0;
         }
-        .bar-outer { height: 14px; background: #111827; border-radius: 7px; overflow: hidden; }
+        .bar-outer { height: 12px; background: #111; border-radius: 6px; overflow: hidden; }
         #bar-inner { 
-            height: 100%; width: 0%; background: linear-gradient(90deg, #6366f1, #a855f7);
-            transition: width 0.05s ease-out; box-shadow: 0 0 15px var(--primary);
+            height: 100%; width: 0%; background: linear-gradient(90deg, #818cf8, #c084fc);
+            transition: width 0.05s ease; box-shadow: 0 0 15px var(--primary);
         }
 
-        /* Transcription Area */
+        /* Transcription Box */
         #display {
-            background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 15px; padding: 20px; min-height: 350px; max-height: 500px;
-            overflow-y: auto; font-size: 19px; line-height: 1.8; color: #e5e7eb;
-            white-space: pre-wrap; outline: none;
+            background: #000; border: 1px solid #222; border-radius: 16px;
+            padding: 20px; min-height: 400px; max-height: 550px;
+            overflow-y: auto; font-size: 19px; line-height: 1.8; color: #ddd;
+            white-space: pre-wrap; outline: none; position: relative;
         }
-        .ghost-text { color: var(--primary); border-right: 2px solid var(--primary); font-style: italic; }
+        .typing-ghost { 
+            color: var(--primary); font-style: italic; 
+            border-right: 2px solid var(--primary); animation: blink 0.6s infinite;
+        }
+        @keyframes blink { 50% { border-color: transparent; } }
 
-        .btn-grid { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 10px; margin-top: 20px; }
+        .btn-row { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 10px; margin-top: 25px; }
         .btn {
             padding: 18px; border-radius: 14px; border: none; font-weight: 800;
             cursor: pointer; font-size: 14px; transition: 0.2s; color: white;
         }
         .btn-start { background: var(--primary); }
         .btn-stop { background: var(--danger); }
-        .btn-util { background: #1f2937; }
-        .btn:active { transform: scale(0.96); }
-
-        .info { font-size: 11px; color: #6b7280; text-align: center; margin-top: 20px; }
+        .btn-util { background: #222; border: 1px solid #333; }
+        
+        .status-info { font-size: 11px; color: #555; text-align: center; margin-top: 20px; letter-spacing: 1px; }
     </style>
 </head>
 <body>
 
     <div class="container">
-        <div class="main-card">
-            <h1 style="margin:0; font-weight:900; letter-spacing:-1px;">FCBS <span style="color:var(--primary)">STUDIO PRO</span></h1>
-            
+        <div class="glass-card">
+            <div class="header">
+                <h1>FCBS <span style="color:#fff">RAW AUDIO MODE</span></h1>
+                <p style="font-size:12px; color:#555; margin:5px 0;">NOISE FILTERS DISABLED | ULTRA SENSITIVE V5</p>
+            </div>
+
             <div class="meter-box">
-                <div style="display:flex; justify-content:space-between; font-size:10px; margin-bottom:8px; font-weight:bold;">
-                    <span>MIC SENSITIVITY (1000% BOOST)</span>
-                    <span id="vol-text">0%</span>
+                <div style="display:flex; justify-content:space-between; font-size:10px; margin-bottom:8px; font-weight:900;">
+                    <span>RAW SIGNAL STRENGTH</span>
+                    <span id="vol-per">0%</span>
                 </div>
                 <div class="bar-outer"><div id="bar-inner"></div></div>
             </div>
 
-            <div id="display">Press 'START' and speak clearly...</div>
+            <div id="display">Tap START. No filters, just raw voice-to-text...</div>
 
-            <div class="btn-grid">
-                <button id="ctrl-btn" class="btn btn-start" onclick="toggleMain()">🎤 START SESSION</button>
-                <button class="btn btn-util" onclick="savePDF()">📄 PDF</button>
-                <button class="btn btn-util" onclick="location.reload()">🔄 RESET</button>
+            <div class="btn-row">
+                <button id="main-btn" class="btn btn-start" onclick="toggleEngine()">🎤 START REC</button>
+                <button class="btn btn-util" onclick="downloadPDF()">📄 PDF</button>
+                <button class="btn btn-util" onclick="clearDisplay()">🗑️</button>
             </div>
 
-            <div class="info" id="status">STATUS: DISCONNECTED</div>
+            <div class="status-info" id="status">STATUS: STANDBY</div>
         </div>
-        <p class="info">DIGI SOLUTIONS | TECHNOLOGY FOR TRINCO</p>
+        <p class="status-info">DEVELOPED BY DIGI SOLUTIONS | MR.THANUSH</p>
     </div>
 
     <script>
-        let rec;
-        let active = false;
-        let finalText = "";
-        let aCtx, analyzer, source, processor;
+        let recognition;
+        let isActive = false;
+        let fullText = "";
+        let aCtx, analyzer, source;
 
-        // Initialize Speech Engine
         if ('webkitSpeechRecognition' in window) {
-            rec = new webkitSpeechRecognition();
-            rec.continuous = true;
-            rec.interimResults = true;
-            rec.lang = 'en-US';
+            recognition = new webkitSpeechRecognition();
+            recognition.continuous = true;
+            recognition.interimResults = true;
+            recognition.lang = 'en-US';
 
-            rec.onresult = (e) => {
+            recognition.onresult = (e) => {
                 let interim = "";
                 for (let i = e.resultIndex; i < e.results.length; ++i) {
                     if (e.results[i].isFinal) {
-                        finalText += e.results[i][0].transcript + " ";
+                        fullText += e.results[i][0].transcript + " ";
                     } else {
                         interim += e.results[i][0].transcript;
                     }
                 }
-                const screen = document.getElementById('display');
-                screen.innerHTML = finalText + '<span class="ghost-text">' + interim + '</span>';
-                screen.scrollTop = screen.scrollHeight;
+                const box = document.getElementById('display');
+                box.innerHTML = fullText + '<span class="typing-ghost">' + interim + '</span>';
+                box.scrollTop = box.scrollHeight;
             };
 
-            rec.onend = () => { if (active) rec.start(); };
-            rec.onerror = (e) => console.log("Engine Error: ", e.error);
+            recognition.onend = () => { if (isActive) recognition.start(); };
         }
 
-        async function toggleMain() {
-            const btn = document.getElementById('ctrl-btn');
-            const status = document.getElementById('status');
-
-            if (!active) {
+        async function toggleEngine() {
+            const btn = document.getElementById('main-btn');
+            if (!isActive) {
                 try {
-                    // Start Audio Context (Crucial for "Length/Meter" to work)
-                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                    // FORCE RAW AUDIO - ALL FILTERS OFF
+                    const stream = await navigator.mediaDevices.getUserMedia({ 
+                        audio: {
+                            echoCancellation: false,
+                            noiseSuppression: false,
+                            autoGainControl: true 
+                        } 
+                    });
+
                     aCtx = new (window.AudioContext || window.webkitAudioContext)();
                     analyzer = aCtx.createAnalyser();
                     source = aCtx.createMediaStreamSource(stream);
                     
-                    // Boost Input Signal
-                    const gainNode = aCtx.createGain();
-                    gainNode.gain.value = 20; // 20x Boost
+                    // Boost Weak Signals (1000% Gain)
+                    const gain = aCtx.createGain();
+                    gain.gain.value = 15; 
                     
-                    source.connect(gainNode);
-                    gainNode.connect(analyzer);
+                    source.connect(gain);
+                    gain.connect(analyzer);
                     
-                    startMeter();
+                    startVisualizer();
 
-                    if(finalText === "" || document.getElementById('display').innerText.includes("Press 'START'")) {
-                        finalText = "";
+                    if(document.getElementById('display').innerText.includes("Tap START")) {
                         document.getElementById('display').innerHTML = "";
                     }
 
-                    rec.start();
-                    active = true;
-                    btn.innerHTML = "🛑 STOP SESSION";
+                    recognition.start();
+                    isActive = true;
+                    btn.innerText = "🛑 STOP SESSION";
                     btn.className = "btn btn-stop";
-                    status.innerText = "STATUS: LISTENING @ 1000% BOOST";
-                } catch (err) {
-                    alert("Mic Access Denied! Settings වලින් Mic එක On කරන්න.");
-                }
+                    document.getElementById('status').innerText = "STATUS: RAW MODE ACTIVE";
+                } catch (err) { alert("Mic Permission Denied!"); }
             } else {
                 stopAll();
             }
         }
 
         function stopAll() {
-            active = false;
-            rec.stop();
+            isActive = false;
+            recognition.stop();
             if(aCtx) aCtx.close();
-            const btn = document.getElementById('ctrl-btn');
-            btn.innerHTML = "🎤 START SESSION";
+            const btn = document.getElementById('main-btn');
+            btn.innerText = "🎤 START REC";
             btn.className = "btn btn-start";
-            document.getElementById('status').innerText = "STATUS: STOPPED";
+            document.getElementById('status').innerText = "STATUS: IDLE";
             document.getElementById('bar-inner').style.width = "0%";
         }
 
-        function startMeter() {
+        function startVisualizer() {
             const data = new Uint8Array(analyzer.frequencyBinCount);
-            const draw = () => {
-                if (!active) return;
+            const loop = () => {
+                if (!isActive) return;
                 analyzer.getByteFrequencyData(data);
                 let sum = 0;
                 for(let i=0; i<data.length; i++) sum += data[i];
-                let vol = Math.round((sum / data.length) * 5); // Sensitivity Scaling
-                if(vol > 100) vol = 100;
-                
-                document.getElementById('bar-inner').style.width = vol + "%";
-                document.getElementById('vol-text').innerText = vol + "%";
-                requestAnimationFrame(draw);
+                let val = Math.round((sum / data.length) * 4);
+                if(val > 100) val = 100;
+                document.getElementById('bar-inner').style.width = val + "%";
+                document.getElementById('vol-per').innerText = val + "%";
+                requestAnimationFrame(loop);
             };
-            draw();
+            loop();
         }
 
-        function savePDF() {
+        function clearDisplay() {
+            if(confirm("මකන්නද?")) {
+                fullText = "";
+                document.getElementById('display').innerHTML = "";
+            }
+        }
+
+        function downloadPDF() {
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF();
             const val = document.getElementById('display').innerText;
-            if(val.length < 2) return;
+            if(val.length < 5) return;
             
             doc.setFontSize(20);
-            doc.text("FCBS LECTURE NOTES", 20, 20);
+            doc.text("FCBS LECTURE NOTES (RAW)", 20, 20);
             doc.setFontSize(10);
-            doc.text("Date: " + new Date().toLocaleString(), 20, 28);
+            doc.text("Generated: " + new Date().toLocaleString(), 20, 28);
             doc.line(20, 32, 190, 32);
             
             doc.setFontSize(12);
             const lines = doc.splitTextToSize(val, 170);
             doc.text(lines, 20, 45);
-            doc.save("Lecture_Note.pdf");
+            doc.save("FCBS_Raw_Note.pdf");
         }
     </script>
 </body>
