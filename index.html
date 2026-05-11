@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FCBS Infinite Transcribe | Digi Solutions</title>
+    <title>FCBS Studio Transcribe | Digi Solutions</title>
     <!-- Thush.lk style fonts and UI libraries -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -14,6 +14,7 @@
             --border: rgba(255, 255, 255, 0.08);
             --primary: #6366f1;
             --accent: #a855f7;
+            --danger: #ef4444;
             --text-main: #f8fafc;
             --text-dim: #94a3b8;
         }
@@ -64,27 +65,29 @@
         .edit-badge {
             position: absolute; top: 15px; right: 15px;
             background: var(--primary); font-size: 10px; padding: 4px 10px;
-            border-radius: 20px; opacity: 0; transition: 0.3s;
+            border-radius: 20px; opacity: 0; transition: 0.3s; pointer-events: none;
         }
         .editing .edit-badge { opacity: 1; }
 
-        /* Controls */
+        /* Controls Grid */
         .controls-grid { 
-            display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 12px; width: 100%; 
+            display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 10px; width: 100%; 
         }
 
         .btn {
-            padding: 16px; border-radius: 16px; border: none; font-weight: 700;
+            padding: 16px 8px; border-radius: 16px; border: none; font-weight: 700;
             cursor: pointer; display: flex; align-items: center; justify-content: center;
-            gap: 10px; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); color: white;
-            font-size: 15px;
+            gap: 6px; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); color: white;
+            font-size: 14px;
         }
 
         .btn-start { background: var(--primary); box-shadow: 0 10px 20px rgba(99, 102, 241, 0.2); }
-        .btn-stop { background: #ef4444; box-shadow: 0 10px 20px rgba(239, 68, 68, 0.2); }
+        .btn-stop { background: var(--danger); box-shadow: 0 10px 20px rgba(239, 68, 68, 0.2); }
         .btn-utility { background: rgba(255,255,255,0.05); border: 1px solid var(--border); }
         .btn-utility:hover { background: rgba(255,255,255,0.1); border-color: var(--primary); }
         .btn-pdf { background: #10b981; }
+        .btn-clear { background: rgba(255, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.2); color: #ef4444; }
+        .btn-clear:hover { background: rgba(239, 68, 68, 0.2); border-color: #ef4444; }
 
         .btn:active { transform: scale(0.96); }
 
@@ -94,7 +97,7 @@
         }
 
         .pulse-icon {
-            width: 10px; height: 10px; background: #ef4444; border-radius: 50%;
+            width: 10px; height: 10px; background: var(--danger); border-radius: 50%;
             display: inline-block; margin-right: 8px; animation: pulse 1.5s infinite;
         }
 
@@ -107,10 +110,10 @@
         footer { margin-top: 40px; font-size: 12px; color: #475569; text-align: center; }
 
         /* Mobile Optimization */
-        @media (max-width: 600px) {
-            .controls-grid { grid-template-columns: 1fr; }
+        @media (max-width: 650px) {
+            .controls-grid { grid-template-columns: 1fr 1fr; }
+            .btn-start, .btn-stop { grid-column: span 2; }
             .glass-card { padding: 25px 15px; }
-            .header h1 { font-size: 24px; }
         }
     </style>
 </head>
@@ -123,7 +126,7 @@
         <div class="glass-card" id="card">
             <div class="header">
                 <h1>FCBS <span class="gradient-text">Studio Transcribe</span></h1>
-                <p style="font-size: 14px; color: var(--text-dim); margin: 8px 0 0 0;">Persistence Focus Mode | Voice Sensitive 100%</p>
+                <p style="font-size: 14px; color: var(--text-dim); margin: 8px 0 0 0;">Persistence Focus Mode | FCBS DIGI KUPPIYA</p>
             </div>
 
             <div class="output-container" id="output-box">
@@ -138,7 +141,7 @@
 
             <div class="controls-grid">
                 <button id="main-btn" class="btn btn-start" onclick="handleMainAction()">
-                    <span id="btn-icon">🎤</span> <span id="btn-text">Start Session</span>
+                    <span id="btn-icon">🎤</span> <span id="btn-text">Start</span>
                 </button>
                 <button class="btn btn-utility" onclick="toggleEdit()">
                     <span id="edit-icon">✏️</span> <span id="edit-text">Edit</span>
@@ -146,11 +149,14 @@
                 <button class="btn btn-pdf" onclick="saveAsPDF()">
                     📄 PDF
                 </button>
+                <button class="btn btn-clear" onclick="clearTranscript()">
+                    🗑️ Clear
+                </button>
             </div>
         </div>
 
         <footer>
-            DIGI SOLUTIONS &copy; 2026 | BUILT FOR FCBS UNIVERSITY STUDENTS
+            DIGI SOLUTIONS &copy; 2026 | DEVELOPED BY MR.THANUSH
         </footer>
     </div>
 
@@ -158,7 +164,7 @@
         let recognition;
         let isRecording = false;
         let isEditing = false;
-        let final_transcript = ""; // Global buffer to hold confirmed text
+        let final_transcript = ""; 
 
         if (!('webkitSpeechRecognition' in window) && !('speechRecognition' in window)) {
             alert("Mchn, use Google Chrome for 100% performance!");
@@ -168,7 +174,7 @@
 
             recognition.continuous = true;
             recognition.interimResults = true;
-            recognition.lang = 'en-US'; // Change to 'si-LK' for Sinhala if needed
+            recognition.lang = 'en-US'; 
 
             recognition.onstart = () => {
                 document.getElementById('status-text').innerHTML = `<span class="pulse-icon"></span> LISTENING...`;
@@ -184,20 +190,16 @@
                     }
                 }
                 
-                // Keep the previous text and show the live results in a different shade
                 document.getElementById('transcript').innerHTML = 
                     final_transcript + '<span style="color: #818cf8; opacity: 0.7">' + interim_transcript + '</span>';
                 
-                // Auto scroll
                 const box = document.getElementById('transcript');
                 box.scrollTop = box.scrollHeight;
             };
 
             recognition.onend = () => {
-                // The Magic: If user hasn't pressed stop, restart it immediately!
                 if (isRecording) {
                     recognition.start();
-                    console.log("Restarting for Persistence...");
                 } else {
                     document.getElementById('status-text').innerText = "Status: STOPPED";
                 }
@@ -205,9 +207,6 @@
 
             recognition.onerror = (e) => {
                 console.log("Recognition error: " + e.error);
-                if (e.error === 'no-speech' && isRecording) {
-                    // Silently ignore and it will restart on onend
-                }
             };
         }
 
@@ -218,19 +217,17 @@
             const transcriptDiv = document.getElementById('transcript');
 
             if (!isRecording) {
-                // START
                 isRecording = true;
-                if(final_transcript === "") transcriptDiv.innerText = "";
+                if(final_transcript.trim() === "" || transcriptDiv.innerText.includes("Press Start...")) transcriptDiv.innerText = "";
                 recognition.start();
                 btn.className = "btn btn-stop";
-                btnText.innerText = "Stop Session";
+                btnText.innerText = "Stop";
                 btnIcon.innerText = "🛑";
             } else {
-                // STOP
                 isRecording = false;
                 recognition.stop();
                 btn.className = "btn btn-start";
-                btnText.innerText = "Start Session";
+                btnText.innerText = "Start";
                 btnIcon.innerText = "🎤";
             }
         }
@@ -253,8 +250,15 @@
                 box.classList.remove('editing');
                 btnText.innerText = "Edit";
                 icon.innerText = "✏️";
-                // Sync the manual edits back to our global buffer
                 final_transcript = div.innerText.trim() + " ";
+            }
+        }
+
+        function clearTranscript() {
+            if (confirm("Are you sure you want to clear all text? This cannot be undone.")) {
+                final_transcript = "";
+                document.getElementById('transcript').innerText = "Your session text will appear here. Press Start...";
+                document.getElementById('status-text').innerText = "Status: CLEARED";
             }
         }
 
@@ -263,6 +267,11 @@
             const doc = new jsPDF();
             const text = document.getElementById('transcript').innerText;
             
+            if(text.includes("Press Start...") || text.trim() === "") {
+                alert("Mchn, there is no text to save!");
+                return;
+            }
+
             doc.setFont("helvetica", "bold");
             doc.setFontSize(22);
             doc.setTextColor(99, 102, 241);
