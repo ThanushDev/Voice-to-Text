@@ -3,235 +3,232 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FCBS Studio Pro | Real-Time Transcribe</title>
+    <title>FCBS Live Transcribe | Real-Time Typing</title>
     
-    <!-- Fonts & PDF Library -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;900&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
     <style>
         :root {
-            --bg: #020617;
-            --card: rgba(255, 255, 255, 0.03);
+            --bg: #030712;
+            --card: rgba(17, 24, 39, 0.7);
+            --primary: #818cf8;
+            --accent: #c084fc;
             --border: rgba(255, 255, 255, 0.1);
-            --primary: #6366f1;
-            --accent: #a855f7;
-            --text-main: #f8fafc;
-            --text-dim: #94a3b8;
         }
 
-        * { box-sizing: border-box; }
         body {
-            margin: 0; background-color: var(--bg); color: var(--text-main);
+            margin: 0; background: var(--bg); color: #f3f4f6;
             font-family: 'Inter', sans-serif; display: flex; justify-content: center;
-            min-height: 100vh;
         }
 
-        .container {
-            width: 95%; max-width: 800px; padding: 40px 15px;
-            display: flex; flex-direction: column;
-        }
+        .container { width: 95%; max-width: 800px; padding: 40px 10px; }
 
         .glass-card {
-            background: var(--card); backdrop-filter: blur(25px);
-            border: 1px solid var(--border); border-radius: 24px;
-            padding: 30px; box-shadow: 0 25px 50px rgba(0,0,0,0.5);
+            background: var(--card); backdrop-filter: blur(20px);
+            border: 1px solid var(--border); border-radius: 28px;
+            padding: 30px; box-shadow: 0 20px 40px rgba(0,0,0,0.4);
         }
 
-        .header { margin-bottom: 20px; }
         .gradient-text {
-            background: linear-gradient(135deg, #818cf8, #c084fc);
+            background: linear-gradient(135deg, var(--primary), var(--accent));
             -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-            font-weight: 800; font-size: 28px;
+            font-weight: 900; font-size: 30px;
         }
 
-        /* Live Indicator */
-        .status-bar {
-            display: flex; justify-content: space-between; align-items: center;
-            font-size: 12px; margin-bottom: 10px; color: var(--text-dim);
+        /* Voice Meter */
+        .visualizer-box {
+            margin: 20px 0; background: rgba(0,0,0,0.3); padding: 15px; border-radius: 20px;
         }
-        .recording-pulse {
-            width: 10px; height: 10px; background: #ef4444; border-radius: 50%;
-            display: inline-block; margin-right: 5px; animation: pulse 1s infinite;
-        }
-        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.3; } 100% { opacity: 1; } }
-
-        /* Output Box */
-        .output-container {
-            background: rgba(0,0,0,0.3); border: 1px solid var(--border);
-            border-radius: 16px; padding: 20px; min-height: 380px;
-            position: relative; overflow: hidden;
-        }
-        #transcript {
-            font-size: 18px; line-height: 1.8; color: #e2e8f0; outline: none;
-            max-height: 450px; overflow-y: auto; white-space: pre-wrap;
+        .bar-bg { height: 12px; background: #1f2937; border-radius: 6px; overflow: hidden; }
+        #bar-fill { 
+            height: 100%; width: 0%; background: linear-gradient(90deg, #6366f1, #a855f7);
+            box-shadow: 0 0 20px rgba(129, 140, 248, 0.6); transition: width 0.05s;
         }
 
-        /* Buttons */
-        .controls { 
-            display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 10px; margin-top: 25px; 
+        /* Typing Box */
+        .type-area {
+            background: rgba(0,0,0,0.5); border: 1px solid var(--border);
+            border-radius: 20px; padding: 25px; min-height: 380px;
+            font-size: 20px; line-height: 1.8; color: #e5e7eb;
+            max-height: 500px; overflow-y: auto; white-space: pre-wrap;
+            position: relative;
         }
+
+        /* The Live "Typing" Cursor Effect */
+        .interim-live {
+            color: var(--primary);
+            border-right: 3px solid var(--primary);
+            animation: blink 0.7s infinite;
+            padding-right: 2px;
+            font-style: italic;
+        }
+
+        @keyframes blink { 0%, 100% { border-color: transparent; } 50% { border-color: var(--primary); } }
+
+        .controls { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 10px; margin-top: 25px; }
         .btn {
-            padding: 15px 5px; border-radius: 12px; border: none; font-weight: 700;
-            cursor: pointer; display: flex; align-items: center; justify-content: center;
-            gap: 8px; transition: 0.2s; color: white; font-size: 13px;
+            padding: 18px; border-radius: 16px; border: none; font-weight: 800;
+            cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;
+            transition: 0.3s; font-size: 14px;
         }
-        .btn-start { background: var(--primary); }
-        .btn-stop { background: #ef4444; }
-        .btn-pdf { background: #10b981; }
-        .btn-util { background: rgba(255,255,255,0.05); border: 1px solid var(--border); }
+        .btn-start { background: var(--primary); color: white; }
+        .btn-stop { background: #ef4444; color: white; }
+        .btn-util { background: #374151; color: white; }
+        .btn:hover { transform: scale(1.02); filter: brightness(1.1); }
 
-        .interim-text { color: #a855f7; font-style: italic; font-weight: 500; }
-
-        @media (max-width: 600px) {
-            .controls { grid-template-columns: 1fr 1fr; }
-            .btn-start, .btn-stop { grid-column: span 2; }
-        }
+        .status { font-size: 12px; color: #9ca3af; margin-top: 15px; text-align: center; }
     </style>
 </head>
 <body>
 
     <div class="container">
         <div class="glass-card">
-            <div class="header">
-                <span class="gradient-text">FCBS Studio Pro</span>
-                <p style="color: var(--text-dim); font-size: 12px; margin: 5px 0 0 0;">Visual Sync Mode | 2026 Edition</p>
+            <div style="margin-bottom: 20px;">
+                <span class="gradient-text">FCBS LIVE TYPING</span>
+                <p style="color: #6b7280; font-size: 13px; margin: 5px 0;">1000% Sensitive | Instant Transcription</p>
             </div>
 
-            <div class="status-bar">
-                <div id="status-label">Status: IDLE</div>
-                <div id="lang-indicator">English (US)</div>
+            <div class="visualizer-box">
+                <div style="display:flex; justify-content:space-between; font-size:10px; margin-bottom:8px; font-weight:800;">
+                    <span>VOICE POWER</span>
+                    <span id="vol-num">0%</span>
+                </div>
+                <div class="bar-bg"><div id="bar-fill"></div></div>
             </div>
 
-            <div class="output-container">
-                <div id="transcript" contenteditable="false">Your words will appear here the moment you speak. Press 'Start'...</div>
-            </div>
+            <div id="transcript" class="type-area" contenteditable="false">Press Start and speak...</div>
 
             <div class="controls">
-                <button id="main-btn" class="btn btn-start" onclick="toggleRecording()">
-                    <span id="btn-icon">🎤</span> <span id="btn-text">Start Recording</span>
+                <button id="main-btn" class="btn btn-start" onclick="toggleEngine()">
+                    <span id="btn-icon">🎤</span> <span id="btn-text">Start Session</span>
                 </button>
-                <button class="btn btn-util" onclick="toggleEdit()" id="edit-btn">✏️ Edit</button>
-                <button class="btn btn-pdf" onclick="savePDF()">📄 PDF</button>
-                <button class="btn btn-util" style="color: #ef4444" onclick="clearText()">🗑️ Clear</button>
+                <button class="btn btn-util" onclick="exportToPDF()">📄 PDF</button>
+                <button class="btn btn-util" style="background:#1f2937" onclick="clearAll()">🗑️</button>
             </div>
+            
+            <div class="status" id="status-msg">Status: WAITING</div>
         </div>
-        <footer style="text-align: center; margin-top: 20px; font-size: 11px; color: #475569;">
-            DIGI SOLUTIONS &copy; | DEVELOPED BY MR.THANUSH
-        </footer>
+        <div style="text-align: center; margin-top: 20px; color: #4b5563; font-size: 11px;">DIGI SOLUTIONS PRO</div>
     </div>
 
     <script>
         let recognition;
         let isRecording = false;
-        let isEditing = false;
-        let final_transcript = "";
+        let final_text = "";
+        let audioCtx, analyser, microphone, gainNode;
 
-        // Web Speech API Initialization
         if ('webkitSpeechRecognition' in window) {
             recognition = new webkitSpeechRecognition();
             recognition.continuous = true;
-            recognition.interimResults = true; // MEKA THAMAI REAL-TIME TYPE KARANNE
+            recognition.interimResults = true; // MEKA THAMAI REAL-TIME TYPING KARANNE
 
             recognition.onresult = (event) => {
-                let interim_transcript = "";
+                let interim_text = "";
                 for (let i = event.resultIndex; i < event.results.length; ++i) {
                     if (event.results[i].isFinal) {
-                        final_transcript += event.results[i][0].transcript + " ";
+                        final_text += event.results[i][0].transcript + " ";
                     } else {
-                        interim_transcript += event.results[i][0].transcript;
+                        interim_text += event.results[i][0].transcript;
                     }
                 }
                 
-                // Real-time Update
                 const box = document.getElementById('transcript');
-                box.innerHTML = final_transcript + '<span class="interim-text">' + interim_transcript + '</span>';
-                box.scrollTop = box.scrollHeight; // Auto Scroll
+                // Real-time "Typing" display
+                box.innerHTML = final_text + '<span class="interim-live">' + interim_text + '</span>';
+                box.scrollTop = box.scrollHeight;
             };
 
-            recognition.onstart = () => {
-                document.getElementById('status-label').innerHTML = '<span class="recording-pulse"></span> RECORDING LIVE';
-            };
-
-            recognition.onend = () => {
-                if (isRecording) recognition.start(); // Auto-restart if browser stops
-            };
+            recognition.onend = () => { if (isRecording) recognition.start(); };
         }
 
-        function toggleRecording() {
+        async function toggleEngine() {
             const btn = document.getElementById('main-btn');
-            const icon = document.getElementById('btn-icon');
-            const text = document.getElementById('btn-text');
+            const status = document.getElementById('status-msg');
 
             if (!isRecording) {
-                isRecording = true;
-                if(final_transcript === "" || document.getElementById('transcript').innerText.includes("Your words will")) {
-                    document.getElementById('transcript').innerHTML = "";
-                    final_transcript = "";
-                }
-                recognition.start();
-                btn.className = "btn btn-stop";
-                icon.innerText = "🛑";
-                text.innerText = "Stop Session";
+                try {
+                    // 1000% Sensitivity Boost
+                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                    audioCtx = new AudioContext();
+                    analyser = audioCtx.createAnalyser();
+                    microphone = audioCtx.createMediaStreamSource(stream);
+                    gainNode = audioCtx.createGain();
+                    
+                    gainNode.gain.value = 18; // Massive gain boost
+                    microphone.connect(gainNode);
+                    gainNode.connect(analyser);
+                    
+                    startVisualizer();
+
+                    if(final_text === "" || document.getElementById('transcript').innerText.includes("Press Start")) {
+                        final_text = "";
+                    }
+
+                    recognition.start();
+                    isRecording = true;
+                    btn.className = "btn btn-stop";
+                    document.getElementById('btn-icon').innerText = "🛑";
+                    document.getElementById('btn-text').innerText = "Stop Session";
+                    status.innerText = "Status: TYPING LIVE...";
+                } catch (e) { alert("Microphone access needed!"); }
             } else {
-                isRecording = false;
-                recognition.stop();
-                btn.className = "btn btn-start";
-                icon.innerText = "🎤";
-                text.innerText = "Start Recording";
-                document.getElementById('status-label').innerText = "Status: STOPPED";
+                stopEngine();
             }
         }
 
-        function toggleEdit() {
-            const box = document.getElementById('transcript');
-            const btn = document.getElementById('edit-btn');
-            isEditing = !isEditing;
-            box.contentEditable = isEditing;
-            
-            if (isEditing) {
-                btn.innerHTML = "💾 Save";
-                box.style.border = "1px solid var(--primary)";
-            } else {
-                btn.innerHTML = "✏️ Edit";
-                box.style.border = "1px solid var(--border)";
-                final_transcript = box.innerText + " ";
+        function stopEngine() {
+            isRecording = false;
+            recognition.stop();
+            if (audioCtx) audioCtx.close();
+            document.getElementById('main-btn').className = "btn btn-start";
+            document.getElementById('btn-icon').innerText = "🎤";
+            document.getElementById('btn-text').innerText = "Start Session";
+            document.getElementById('status-msg').innerText = "Status: STOPPED";
+            document.getElementById('bar-fill').style.width = "0%";
+        }
+
+        function startVisualizer() {
+            const data = new Uint8Array(analyser.frequencyBinCount);
+            const loop = () => {
+                if (!isRecording) return;
+                analyser.getByteFrequencyData(data);
+                let sum = data.reduce((a, b) => a + b, 0);
+                let vol = Math.round(Math.min((sum / data.length) * 4, 100));
+                document.getElementById('bar-fill').style.width = vol + "%";
+                document.getElementById('vol-num').innerText = vol + "%";
+                requestAnimationFrame(loop);
+            };
+            loop();
+        }
+
+        function clearAll() {
+            if(confirm("මකන්නද?")) {
+                final_text = "";
+                document.getElementById('transcript').innerHTML = "Press Start and speak...";
             }
         }
 
-        function clearText() {
-            if(confirm("මොකද කියන්නේ? ඔක්කොම මකන්නද?")) {
-                final_transcript = "";
-                document.getElementById('transcript').innerHTML = "Your words will appear here the moment you speak. Press 'Start'...";
-            }
-        }
-
-        function savePDF() {
+        function exportToPDF() {
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF();
-            const content = document.getElementById('transcript').innerText;
-
-            if(!content || content.includes("Your words will")) {
-                alert("Mchn, empty file එකක් download කරන්න බෑනේ!");
-                return;
-            }
+            const text = document.getElementById('transcript').innerText;
+            if(text.length < 5) return;
 
             doc.setFontSize(22);
-            doc.setTextColor(99, 102, 241);
-            doc.text("FCBS Lecture Transcript", 15, 20);
+            doc.setTextColor(129, 140, 248);
+            doc.text("FCBS LECTURE NOTE", 20, 20);
             
             doc.setFontSize(10);
             doc.setTextColor(100);
-            doc.text("Generated: " + new Date().toLocaleString(), 15, 28);
-            
-            doc.line(15, 32, 195, 32);
+            doc.text("Date: " + new Date().toLocaleString(), 20, 28);
+            doc.line(20, 32, 190, 32);
 
             doc.setFontSize(12);
             doc.setTextColor(0);
-            const lines = doc.splitTextToSize(content, 180);
-            doc.text(lines, 15, 42);
-            
-            doc.save("FCBS_Lecture_Note.pdf");
+            const splitLines = doc.splitTextToSize(text, 170);
+            doc.text(splitLines, 20, 42);
+            doc.save("FCBS_Live_Note.pdf");
         }
     </script>
 </body>
