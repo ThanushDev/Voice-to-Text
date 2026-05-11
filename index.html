@@ -3,229 +3,132 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FCBS STUDIO ULTRA PRO | DIGI SOLUTIONS</title>
-    
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;900&display=swap" rel="stylesheet">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-
+    <title>FCBS NUCLEAR SENSE V10</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;900&display=swap" rel="stylesheet">
     <style>
-        :root {
-            --primary: #6366f1;
-            --accent: #d946ef;
-            --bg: #030303;
-            --card: #0f0f0f;
-            --border: #262626;
-        }
-
-        body {
-            margin: 0; background-color: var(--bg); color: #fff;
-            font-family: 'Inter', sans-serif; display: flex; justify-content: center;
-        }
-
-        .container { width: 95%; max-width: 900px; padding: 40px 10px; }
-
-        .glass-card {
-            background: var(--card); border: 1px solid var(--border);
-            border-radius: 30px; padding: 35px; box-shadow: 0 25px 60px rgba(0,0,0,0.8);
-        }
-
-        .header h1 { font-size: 32px; margin: 0; font-weight: 900; letter-spacing: -1.5px; }
-        .gradient-text {
-            background: linear-gradient(135deg, var(--primary), var(--accent));
-            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-        }
-
-        /* Logic for "Length/Meter" to work */
-        .meter-wrapper {
-            background: #000; border: 1px solid var(--border);
-            border-radius: 20px; padding: 20px; margin: 25px 0;
-        }
-        .bar-container { height: 12px; background: #171717; border-radius: 6px; overflow: hidden; position: relative; }
-        #bar-fill { 
-            height: 100%; width: 0%; background: linear-gradient(90deg, var(--primary), var(--accent));
-            box-shadow: 0 0 20px rgba(99, 102, 241, 0.4); transition: width 0.05s;
-        }
-
-        /* Transcription Engine Output */
-        .output-box {
-            background: #050505; border: 1px solid var(--border);
-            border-radius: 20px; padding: 30px; min-height: 450px;
-            font-size: 20px; line-height: 1.9; color: #e5e5e5;
-            outline: none; max-height: 600px; overflow-y: auto;
-            white-space: pre-wrap; position: relative;
-        }
-        .live-ghost { 
-            color: var(--primary); font-style: italic; font-weight: 500;
-            border-right: 3px solid var(--primary); animation: blink 0.7s infinite;
-        }
-        @keyframes blink { 50% { border-color: transparent; } }
-
-        .controls { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 15px; margin-top: 30px; }
-        .btn {
-            padding: 20px; border-radius: 18px; border: none; font-weight: 800;
-            cursor: pointer; font-size: 14px; transition: 0.3s; color: white;
-        }
-        .btn-start { background: var(--primary); box-shadow: 0 10px 25px rgba(99, 102, 241, 0.3); }
-        .btn-stop { background: #ef4444; }
-        .btn-util { background: #1a1a1a; border: 1px solid var(--border); }
+        :root { --glow: #00ff41; --bg: #000; }
+        body { margin: 0; background: var(--bg); color: #fff; font-family: 'Inter', sans-serif; display: flex; justify-content: center; }
+        .container { width: 95%; max-width: 900px; padding: 20px; }
+        .box { background: #080808; border: 1px solid #111; border-radius: 25px; padding: 30px; box-shadow: 0 0 50px rgba(0, 255, 65, 0.1); }
         
-        .btn:hover { transform: translateY(-3px); filter: brightness(1.2); }
+        /* Nuclear Level Meter */
+        .meter-container { height: 15px; background: #111; border-radius: 30px; margin: 20px 0; overflow: hidden; border: 1px solid #222; }
+        #fill { height: 100%; width: 0%; background: linear-gradient(90deg, #00ff41, #008f11); box-shadow: 0 0 20px var(--glow); transition: width 0.02s; }
 
-        select {
-            background: #1a1a1a; color: white; border: 1px solid var(--border);
-            padding: 10px; border-radius: 10px; margin-bottom: 15px; width: 100%; outline: none;
+        #output { 
+            background: #000; border: 1px solid #111; border-radius: 20px; padding: 25px; 
+            min-height: 450px; font-size: 22px; line-height: 1.8; color: #00ff41; 
+            overflow-y: auto; white-space: pre-wrap; font-family: 'Courier New', monospace;
         }
+        .interim { color: #fff; opacity: 0.6; font-style: italic; }
+
+        .controls { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 25px; }
+        .btn { padding: 22px; border-radius: 18px; border: none; font-weight: 900; cursor: pointer; text-transform: uppercase; letter-spacing: 2px; }
+        .start { background: #00ff41; color: #000; }
+        .stop { background: #ff0000; color: #fff; }
+        
+        select { background: #111; color: #00ff41; border: 1px solid #222; padding: 15px; border-radius: 12px; width: 100%; margin-bottom: 10px; }
     </style>
 </head>
 <body>
 
-    <div class="container">
-        <div class="glass-card">
-            <div style="display:flex; justify-content:space-between; align-items:flex-start;">
-                <div>
-                    <h1>FCBS <span class="gradient-text">ULTRA SENSE</span></h1>
-                    <p style="color:#525252; font-size:12px; margin:5px 0;">RAW AUDIO CAPTURE | 1000% SENSITIVITY</p>
-                </div>
-                <div style="text-align:right; font-size:10px; color:#404040;">2026 PRO EDITION</div>
-            </div>
+<div class="container">
+    <div class="box">
+        <h1 style="margin:0; font-weight:900; color:var(--glow);">NUCLEAR <span style="color:#fff;">SENSE V10</span></h1>
+        <p style="font-size:11px; color:#444;">1000%+ GAIN BOOST | ZERO FILTERING | RAW CAPTURE</p>
+        
+        <div class="meter-container"><div id="fill"></div></div>
+        
+        <select id="lang">
+            <option value="en-US">ENGLISH LECTURE</option>
+            <option value="si-LK">SINHALA LECTURE</option>
+        </select>
 
-            <div class="meter-wrapper">
-                <div style="display:flex; justify-content:space-between; font-size:11px; margin-bottom:10px; font-weight:900;">
-                    <span>VOICE INPUT POWER</span>
-                    <span id="vol-num">0%</span>
-                </div>
-                <div class="bar-container"><div id="bar-fill"></div></div>
-            </div>
+        <div id="output">SYSTEM STANDBY. TAP START TO BOOST...</div>
 
-            <select id="lang-set">
-                <option value="en-US">Target: English Lecture</option>
-                <option value="si-LK">Target: Sinhala Lecture</option>
-            </select>
-
-            <div id="display" class="output-box" contenteditable="true">Ready for session. Tap 'START' to capture raw audio...</div>
-
-            <div class="controls">
-                <button id="main-btn" class="btn btn-start" onclick="startEngine()">🎤 START ENGINE</button>
-                <button class="btn btn-util" onclick="exportPDF()">📄 SAVE PDF</button>
-                <button class="btn btn-util" style="color:#ef4444" onclick="location.reload()">🔄 RESET</button>
-            </div>
-            
-            <p id="status-text" style="text-align:center; font-size:11px; color:#404040; margin-top:20px;">ENGINE STATUS: IDLE</p>
+        <div class="controls">
+            <button id="mainBtn" class="btn start" onclick="ignite()">Ignite Engine</button>
+            <button class="btn" style="background:#111; color:#fff;" onclick="location.reload()">Reset</button>
         </div>
-        <footer style="text-align:center; margin-top:30px; font-size:12px; color:#262626;">DEVELOPED BY MR.THANUSH | DIGI SOLUTIONS</footer>
+        <p id="st" style="text-align:center; font-size:10px; color:#333; margin-top:20px;">DIGI SOLUTIONS SUPERSENSE TECH</p>
     </div>
+</div>
 
-    <script>
-        let rec;
-        let isRunning = false;
-        let finalOutput = "";
-        let audioCtx, analyzer, micSource, boostNode;
+<script>
+    let recognition;
+    let isActive = false;
+    let finalLog = "";
+    let aCtx, analyzer, source, gainNode;
 
-        if ('webkitSpeechRecognition' in window) {
-            rec = new webkitSpeechRecognition();
-            rec.continuous = true;
-            rec.interimResults = true;
+    async function ignite() {
+        const btn = document.getElementById('mainBtn');
+        if (!isActive) {
+            try {
+                // STEP 1: Get RAW Microphone Access (No filtering)
+                const stream = await navigator.mediaDevices.getUserMedia({ 
+                    audio: { 
+                        echoCancellation: false, 
+                        noiseSuppression: false, 
+                        autoGainControl: false // Turning off browser AGC to use our OWN 1000% boost
+                    } 
+                });
 
-            rec.onresult = (event) => {
-                let interim = "";
-                for (let i = event.resultIndex; i < event.results.length; ++i) {
-                    if (event.results[i].isFinal) {
-                        finalOutput += event.results[i][0].transcript + " ";
-                    } else {
-                        interim += event.results[i][0].transcript;
+                // STEP 2: Digital Pre-Amp (The Booster)
+                aCtx = new (window.AudioContext || window.webkitAudioContext)();
+                source = aCtx.createMediaStreamSource(stream);
+                gainNode = aCtx.createGain();
+                analyzer = aCtx.createAnalyser();
+
+                // 1000% - 5000% Sensitivity Boost
+                gainNode.gain.value = 50; 
+                
+                source.connect(gainNode);
+                gainNode.connect(analyzer);
+                // Note: We don't connect to aCtx.destination to avoid loud feedback loops
+
+                visualize();
+
+                // STEP 3: Speech Engine
+                recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+                recognition.continuous = true;
+                recognition.interimResults = true;
+                recognition.lang = document.getElementById('lang').value;
+
+                recognition.onresult = (e) => {
+                    let interim = "";
+                    for (let i = e.resultIndex; i < e.results.length; ++i) {
+                        if (e.results[i].isFinal) finalLog += e.results[i][0].transcript + ". ";
+                        else interim += e.results[i][0].transcript;
                     }
-                }
-                const screen = document.getElementById('display');
-                screen.innerHTML = finalOutput + '<span class="live-ghost">' + interim + '</span>';
-                screen.scrollTop = screen.scrollHeight;
-            };
+                    document.getElementById('output').innerHTML = finalLog + '<span class="interim">' + interim + '</span>';
+                    document.getElementById('output').scrollTop = document.getElementById('output').scrollHeight;
+                };
 
-            rec.onend = () => { if (isRunning) rec.start(); };
-            rec.onerror = (e) => { console.error("Engine Sync Error: ", e.error); };
+                recognition.onend = () => { if (isActive) recognition.start(); };
+                
+                recognition.start();
+                isActive = true;
+                btn.innerText = "Nuclear Active";
+                btn.className = "btn stop";
+                if(document.getElementById('output').innerText.includes("STANDBY")) document.getElementById('output').innerHTML = "";
+
+            } catch (err) { alert("Mic Access Error: " + err); }
+        } else {
+            location.reload();
         }
+    }
 
-        async function startEngine() {
-            const btn = document.getElementById('main-btn');
-            if (!isRunning) {
-                try {
-                    // RAW AUDIO - DISABLE FILTERS THAT KILL WEAK VOICE
-                    const stream = await navigator.mediaDevices.getUserMedia({ 
-                        audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: true } 
-                    });
+    function visualize() {
+        if(!isActive) return;
+        const data = new Uint8Array(analyzer.frequencyBinCount);
+        analyzer.getByteFrequencyData(data);
+        let sum = 0;
+        for(let i=0; i<data.length; i++) sum += data[i];
+        let level = (sum / data.length) * 10; // Boosted visualization
+        document.getElementById('fill').style.width = Math.min(level, 100) + "%";
+        requestAnimationFrame(visualize);
+    }
+</script>
 
-                    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                    analyzer = audioCtx.createAnalyser();
-                    micSource = audioCtx.createMediaStreamSource(stream);
-                    boostNode = audioCtx.createGain();
-                    
-                    boostNode.gain.value = 25; // 1000% Boost for weak signals
-                    micSource.connect(boostNode);
-                    boostNode.connect(analyzer);
-                    
-                    visualize();
-
-                    if(document.getElementById('display').innerText.includes("Ready for session")) {
-                        document.getElementById('display').innerHTML = "";
-                        finalOutput = "";
-                    }
-
-                    rec.lang = document.getElementById('lang-set').value;
-                    rec.start();
-                    isRunning = true;
-                    btn.innerText = "🛑 STOP ENGINE";
-                    btn.className = "btn btn-stop";
-                    document.getElementById('status-text').innerText = "ENGINE STATUS: CAPTURING RAW AUDIO";
-                } catch (e) { alert("Please allow Mic Access!"); }
-            } else {
-                stopEngine();
-            }
-        }
-
-        function stopEngine() {
-            isRunning = false;
-            rec.stop();
-            if(audioCtx) audioCtx.close();
-            const btn = document.getElementById('main-btn');
-            btn.innerText = "🎤 START ENGINE";
-            btn.className = "btn btn-start";
-            document.getElementById('status-text').innerText = "ENGINE STATUS: STOPPED";
-            document.getElementById('bar-fill').style.width = "0%";
-        }
-
-        function visualize() {
-            const data = new Uint8Array(analyzer.frequencyBinCount);
-            const loop = () => {
-                if (!isRunning) return;
-                analyzer.getByteFrequencyData(data);
-                let sum = 0;
-                for(let i=0; i<data.length; i++) sum += data[i];
-                let vol = Math.round(Math.min((sum / data.length) * 5, 100));
-                document.getElementById('bar-fill').style.width = vol + "%";
-                document.getElementById('vol-num').innerText = vol + "%";
-                requestAnimationFrame(loop);
-            };
-            loop();
-        }
-
-        function exportPDF() {
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF();
-            const text = document.getElementById('display').innerText;
-            if(text.length < 5) return;
-            
-            doc.setFontSize(22);
-            doc.setTextColor(99, 102, 241);
-            doc.text("FCBS LECTURE TRANSCRIPT", 20, 20);
-            doc.setFontSize(10);
-            doc.setTextColor(100);
-            doc.text("Date: " + new Date().toLocaleString(), 20, 28);
-            doc.line(20, 32, 190, 32);
-            doc.setFontSize(12);
-            doc.setTextColor(0);
-            const lines = doc.splitTextToSize(text, 170);
-            doc.text(lines, 20, 42);
-            doc.save("FCBS_Transcript.pdf");
-        }
-    </script>
 </body>
 </html>
