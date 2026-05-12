@@ -3,110 +3,109 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FCBS NUCLEAR SENSE V10</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;900&display=swap" rel="stylesheet">
+    <title>FCBS SUPERSENSE RAW | FINAL</title>
     <style>
-        :root { --glow: #00ff41; --bg: #000; }
-        body { margin: 0; background: var(--bg); color: #fff; font-family: 'Inter', sans-serif; display: flex; justify-content: center; }
-        .container { width: 95%; max-width: 900px; padding: 20px; }
-        .box { background: #080808; border: 1px solid #111; border-radius: 25px; padding: 30px; box-shadow: 0 0 50px rgba(0, 255, 65, 0.1); }
-        
-        /* Nuclear Level Meter */
-        .meter-container { height: 15px; background: #111; border-radius: 30px; margin: 20px 0; overflow: hidden; border: 1px solid #222; }
-        #fill { height: 100%; width: 0%; background: linear-gradient(90deg, #00ff41, #008f11); box-shadow: 0 0 20px var(--glow); transition: width 0.02s; }
-
+        body { margin: 0; background: #000; color: #fff; font-family: sans-serif; display: flex; justify-content: center; }
+        .container { width: 100%; max-width: 900px; padding: 20px; }
         #output { 
-            background: #000; border: 1px solid #111; border-radius: 20px; padding: 25px; 
-            min-height: 450px; font-size: 22px; line-height: 1.8; color: #00ff41; 
-            overflow-y: auto; white-space: pre-wrap; font-family: 'Courier New', monospace;
+            background: #050505; border: 2px solid #333; border-radius: 15px; 
+            padding: 20px; min-height: 500px; font-size: 24px; line-height: 1.8; 
+            color: #fff; overflow-y: auto; white-space: pre-wrap;
         }
-        .interim { color: #fff; opacity: 0.6; font-style: italic; }
-
-        .controls { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 25px; }
-        .btn { padding: 22px; border-radius: 18px; border: none; font-weight: 900; cursor: pointer; text-transform: uppercase; letter-spacing: 2px; }
-        .start { background: #00ff41; color: #000; }
+        .live-text { color: #00ff00; font-weight: bold; }
+        .controls { display: flex; gap: 10px; margin-top: 20px; }
+        button { padding: 20px; flex: 1; border: none; border-radius: 10px; font-size: 18px; font-weight: bold; cursor: pointer; }
+        .start { background: #00ff00; color: #000; }
         .stop { background: #ff0000; color: #fff; }
-        
-        select { background: #111; color: #00ff41; border: 1px solid #222; padding: 15px; border-radius: 12px; width: 100%; margin-bottom: 10px; }
+        .meter { height: 10px; background: #222; margin: 10px 0; border-radius: 5px; }
+        #bar { height: 100%; width: 0%; background: #00ff00; transition: width 0.05s; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <div class="box">
-        <h1 style="margin:0; font-weight:900; color:var(--glow);">NUCLEAR <span style="color:#fff;">SENSE V10</span></h1>
-        <p style="font-size:11px; color:#444;">1000%+ GAIN BOOST | ZERO FILTERING | RAW CAPTURE</p>
-        
-        <div class="meter-container"><div id="fill"></div></div>
-        
-        <select id="lang">
-            <option value="en-US">ENGLISH LECTURE</option>
-            <option value="si-LK">SINHALA LECTURE</option>
-        </select>
-
-        <div id="output">SYSTEM STANDBY. TAP START TO BOOST...</div>
-
-        <div class="controls">
-            <button id="mainBtn" class="btn start" onclick="ignite()">Ignite Engine</button>
-            <button class="btn" style="background:#111; color:#fff;" onclick="location.reload()">Reset</button>
-        </div>
-        <p id="st" style="text-align:center; font-size:10px; color:#333; margin-top:20px;">DIGI SOLUTIONS SUPERSENSE TECH</p>
+    <h2>FCBS SUPERSENSE (1000% RAW MODE)</h2>
+    <div class="meter"><div id="bar"></div></div>
+    <select id="lang" style="width: 100%; padding: 10px; background: #222; color: #fff; border-radius: 5px;">
+        <option value="en-US">English (US)</option>
+        <option value="si-LK">Sinhala (Sri Lanka)</option>
+    </select>
+    
+    <div id="output">SYSTEM READY. CLICK START...</div>
+    
+    <div class="controls">
+        <button id="btn" class="start" onclick="startApp()">START ENGINE</button>
+        <button onclick="location.reload()" style="background:#444; color:#fff;">RESET</button>
     </div>
 </div>
 
 <script>
-    let recognition;
-    let isActive = false;
-    let finalLog = "";
-    let aCtx, analyzer, source, gainNode;
+    let rec;
+    let isRunning = false;
+    let finalTranscript = "";
 
-    async function ignite() {
-        const btn = document.getElementById('mainBtn');
-        if (!isActive) {
-            try {
-                // STEP 1: Get RAW Microphone Access (No filtering)
-                const stream = await navigator.mediaDevices.getUserMedia({ 
-                    audio: { 
-                        echoCancellation: false, 
-                        noiseSuppression: false, 
-                        autoGainControl: false // Turning off browser AGC to use our OWN 1000% boost
-                    } 
-                });
+    async function startApp() {
+        if (!isRunning) {
+            // 1. Raw Audio Access (No filters)
+            const stream = await navigator.mediaDevices.getUserMedia({ 
+                audio: { 
+                    echoCancellation: false, 
+                    noiseSuppression: false, 
+                    autoGainControl: false,
+                    latency: 0
+                } 
+            });
 
-                // STEP 2: Digital Pre-Amp (The Booster)
-                aCtx = new (window.AudioContext || window.webkitAudioContext)();
-                source = aCtx.createMediaStreamSource(stream);
-                gainNode = aCtx.createGain();
-                analyzer = aCtx.createAnalyser();
+            // 2. Audio Visualizer Setup
+            const ctx = new AudioContext();
+            const analyzer = ctx.createAnalyser();
+            const source = ctx.createMediaStreamSource(stream);
+            source.connect(analyzer);
+            
+            // 3. Speech Recognition Engine
+            rec = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+            rec.continuous = true;
+            rec.interimResults = true;
+            rec.lang = document.getElementById('lang').value;
 
-                // 1000% - 5000% Sensitivity Boost
-                gainNode.gain.value = 50; 
-                
-                source.connect(gainNode);
-                gainNode.connect(analyzer);
-                // Note: We don't connect to aCtx.destination to avoid loud feedback loops
+            rec.onresult = (e) => {
+                let interim = "";
+                for (let i = e.resultIndex; i < e.results.length; ++i) {
+                    if (e.results[i].isFinal) finalTranscript += e.results[i][0].transcript + " ";
+                    else interim += e.results[i][0].transcript;
+                }
+                document.getElementById('output').innerHTML = finalTranscript + '<span class="live-text">' + interim + '</span>';
+                document.getElementById('output').scrollTop = document.getElementById('output').scrollHeight;
+            };
 
-                visualize();
+            rec.onend = () => { if(isRunning) rec.start(); };
+            
+            rec.start();
+            isRunning = true;
+            document.getElementById('btn').innerText = "STOP ENGINE";
+            document.getElementById('btn').className = "stop";
 
-                // STEP 3: Speech Engine
-                recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
-                recognition.continuous = true;
-                recognition.interimResults = true;
-                recognition.lang = document.getElementById('lang').value;
+            // Visualizer Loop
+            function draw() {
+                if(!isRunning) return;
+                let data = new Uint8Array(analyzer.frequencyBinCount);
+                analyzer.getByteFrequencyData(data);
+                let vol = data.reduce((a,b) => a+b) / data.length;
+                document.getElementById('bar').style.width = Math.min(vol * 5, 100) + "%";
+                requestAnimationFrame(draw);
+            }
+            draw();
 
-                recognition.onresult = (e) => {
-                    let interim = "";
-                    for (let i = e.resultIndex; i < e.results.length; ++i) {
-                        if (e.results[i].isFinal) finalLog += e.results[i][0].transcript + ". ";
-                        else interim += e.results[i][0].transcript;
-                    }
-                    document.getElementById('output').innerHTML = finalLog + '<span class="interim">' + interim + '</span>';
-                    document.getElementById('output').scrollTop = document.getElementById('output').scrollHeight;
-                };
-
-                recognition.onend = () => { if (isActive) recognition.start(); };
-                
-                recognition.start();
+        } else {
+            isRunning = false;
+            rec.stop();
+            document.getElementById('btn').innerText = "START ENGINE";
+            document.getElementById('btn').className = "start";
+        }
+    }
+</script>
+</body>
+</html>
                 isActive = true;
                 btn.innerText = "Nuclear Active";
                 btn.className = "btn stop";
