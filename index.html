@@ -3,110 +3,289 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SUPERSENSE V12 | RAW AUDIO</title>
+    <title>FCBS Infinite Transcribe | Digi Solutions</title>
+    <!-- Thush.lk style fonts and UI libraries -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
-        :root { --accent: #00ff41; --bg: #050505; }
-        body { margin: 0; background: var(--bg); color: #fff; font-family: 'Segoe UI', Tahoma, sans-serif; display: flex; justify-content: center; }
-        .wrapper { width: 95%; max-width: 850px; padding: 25px; }
-        .main-card { background: #0a0a0a; border: 1px solid #1a1a1a; border-radius: 25px; padding: 30px; box-shadow: 0 0 60px rgba(0, 255, 65, 0.05); }
-        
-        /* High-Gain Meter */
-        .meter-container { height: 12px; background: #111; border-radius: 10px; margin: 20px 0; overflow: hidden; border: 1px solid #222; }
-        #fill { height: 100%; width: 0%; background: linear-gradient(90deg, #008f11, var(--accent)); box-shadow: 0 0 15px var(--accent); transition: width 0.05s ease; }
-
-        #display-box { 
-            background: #000; border: 1px solid #111; border-radius: 15px; padding: 25px; 
-            min-height: 480px; font-size: 22px; line-height: 1.8; color: #e0e0e0; 
-            overflow-y: auto; white-space: pre-wrap; outline: none; border-left: 4px solid #1a1a1a;
+        :root {
+            --bg: #020617;
+            --card: rgba(255, 255, 255, 0.03);
+            --border: rgba(255, 255, 255, 0.08);
+            --primary: #6366f1;
+            --accent: #a855f7;
+            --text-main: #f8fafc;
+            --text-dim: #94a3b8;
         }
-        .temp-text { color: var(--accent); font-style: italic; border-right: 2px solid var(--accent); }
 
-        .controls { display: grid; grid-template-columns: 2fr 1fr; gap: 15px; margin-top: 25px; }
-        .btn { padding: 20px; border-radius: 15px; border: none; font-weight: 900; cursor: pointer; text-transform: uppercase; transition: 0.2s; }
-        .btn-start { background: var(--accent); color: #000; }
-        .btn-reset { background: #111; color: #fff; border: 1px solid #222; }
-        .btn:active { transform: scale(0.98); }
+        * { box-sizing: border-box; }
+        body {
+            margin: 0; background-color: var(--bg); color: var(--text-main);
+            font-family: 'Inter', sans-serif; display: flex; justify-content: center;
+            min-height: 100vh; overflow-x: hidden;
+        }
+
+        /* Animated Background Blobs */
+        .blob {
+            position: fixed; width: 400px; height: 400px; background: var(--primary);
+            filter: blur(140px); opacity: 0.12; z-index: -1; border-radius: 50%;
+        }
+
+        .container {
+            width: 95%; max-width: 750px; padding: 40px 15px;
+            display: flex; flex-direction: column; align-items: center;
+        }
+
+        .glass-card {
+            background: var(--card); backdrop-filter: blur(25px);
+            border: 1px solid var(--border); border-radius: 30px;
+            padding: 35px; width: 100%; box-shadow: 0 25px 60px rgba(0,0,0,0.6);
+        }
+
+        .header h1 { font-size: 30px; margin: 0; font-weight: 800; letter-spacing: -1px; }
+        .gradient-text {
+            background: linear-gradient(135deg, #818cf8, #c084fc);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        }
+
+        /* Output Area */
+        .output-container { position: relative; margin: 25px 0; }
         
-        select { background: #111; color: var(--accent); border: 1px solid #222; padding: 12px; border-radius: 10px; width: 100%; margin-bottom: 15px; cursor: pointer; }
+        #transcript {
+            background: rgba(0,0,0,0.4); border: 1px solid var(--border);
+            border-radius: 20px; padding: 25px; min-height: 300px;
+            font-size: 17px; line-height: 1.8; color: #e2e8f0;
+            outline: none; transition: 0.3s; max-height: 500px; overflow-y: auto;
+            white-space: pre-wrap;
+        }
+
+        #transcript:focus { border-color: var(--primary); box-shadow: 0 0 20px rgba(99, 102, 241, 0.1); }
+
+        .edit-badge {
+            position: absolute; top: 15px; right: 15px;
+            background: var(--primary); font-size: 10px; padding: 4px 10px;
+            border-radius: 20px; opacity: 0; transition: 0.3s;
+        }
+        .editing .edit-badge { opacity: 1; }
+
+        /* Controls */
+        .controls-grid { 
+            display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 12px; width: 100%; 
+        }
+
+        .btn {
+            padding: 16px; border-radius: 16px; border: none; font-weight: 700;
+            cursor: pointer; display: flex; align-items: center; justify-content: center;
+            gap: 10px; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); color: white;
+            font-size: 15px;
+        }
+
+        .btn-start { background: var(--primary); box-shadow: 0 10px 20px rgba(99, 102, 241, 0.2); }
+        .btn-stop { background: #ef4444; box-shadow: 0 10px 20px rgba(239, 68, 68, 0.2); }
+        .btn-utility { background: rgba(255,255,255,0.05); border: 1px solid var(--border); }
+        .btn-utility:hover { background: rgba(255,255,255,0.1); border-color: var(--primary); }
+        .btn-pdf { background: #10b981; }
+
+        .btn:active { transform: scale(0.96); }
+
+        .status-info {
+            display: flex; justify-content: space-between; width: 100%;
+            font-size: 12px; color: var(--text-dim); margin-bottom: 12px;
+        }
+
+        .pulse-icon {
+            width: 10px; height: 10px; background: #ef4444; border-radius: 50%;
+            display: inline-block; margin-right: 8px; animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+        }
+
+        footer { margin-top: 40px; font-size: 12px; color: #475569; text-align: center; }
+
+        /* Mobile Optimization */
+        @media (max-width: 600px) {
+            .controls-grid { grid-template-columns: 1fr; }
+            .glass-card { padding: 25px 15px; }
+            .header h1 { font-size: 24px; }
+        }
     </style>
 </head>
 <body>
 
-<div class="wrapper">
-    <div class="main-card">
-        <h1 style="margin:0; font-size: 24px; letter-spacing: -1px;">RAW <span style="color:var(--accent)">SUPERSENSE</span> V12</h1>
-        <p style="font-size: 10px; color: #444; margin-bottom: 20px;">GAIN: 50.0 (5000%) | FILTERS: DISABLED | STATUS: <span id="status-tag" style="color:#555">READY</span></p>
+    <div class="blob" style="top: -10%; left: -10%;"></div>
+    <div class="blob" style="bottom: -10%; right: -10%; background: var(--accent);"></div>
 
-        <div class="meter-container"><div id="fill"></div></div>
+    <div class="container">
+        <div class="glass-card" id="card">
+            <div class="header">
+                <h1>FCBS <span class="gradient-text">Studio Transcribe</span></h1>
+                <p style="font-size: 14px; color: var(--text-dim); margin: 8px 0 0 0;">Persistence Focus Mode | Voice Sensitive 100%</p>
+            </div>
 
-        <select id="langChoice">
-            <option value="en-US">Target: English Lecture</option>
-            <option value="si-LK">Target: Sinhala Lecture</option>
-        </select>
+            <div class="output-container" id="output-box">
+                <div class="edit-badge">EDIT MODE</div>
+                <div id="transcript" contenteditable="false">Your session text will appear here. Press Start...</div>
+            </div>
 
-        <div id="display-box" contenteditable="true">Engine Standby. Tap 'START' to ignite...</div>
+            <div class="status-info">
+                <div id="status-text">Status: IDLE</div>
+                <div id="timer">Manual Stop Required</div>
+            </div>
 
-        <div class="controls">
-            <button id="masterBtn" class="btn btn-start" onclick="igniteEngine()">🎤 Start Engine</button>
-            <button class="btn btn-reset" onclick="location.reload()">🔄 Reset</button>
+            <div class="controls-grid">
+                <button id="main-btn" class="btn btn-start" onclick="handleMainAction()">
+                    <span id="btn-icon">🎤</span> <span id="btn-text">Start Session</span>
+                </button>
+                <button class="btn btn-utility" onclick="toggleEdit()">
+                    <span id="edit-icon">✏️</span> <span id="edit-text">Edit</span>
+                </button>
+                <button class="btn btn-pdf" onclick="saveAsPDF()">
+                    📄 PDF
+                </button>
+            </div>
         </div>
+
+        <footer>
+            DIGI SOLUTIONS &copy; 2026 | BUILT FOR FCBS UNIVERSITY STUDENTS
+        </footer>
     </div>
-</div>
 
-<script>
-    let recognition;
-    let isActive = false;
-    let finalLog = "";
-    let aCtx, analyzer, gainNode;
+    <script>
+        let recognition;
+        let isRecording = false;
+        let isEditing = false;
+        let final_transcript = ""; // Global buffer to hold confirmed text
 
-    async function igniteEngine() {
-        const btn = document.getElementById('masterBtn');
-        const status = document.getElementById('status-tag');
+        if (!('webkitSpeechRecognition' in window) && !('speechRecognition' in window)) {
+            alert("Mchn, use Google Chrome for 100% performance!");
+        } else {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            recognition = new SpeechRecognition();
 
-        if (!isActive) {
-            try {
-                // Step 1: Force Request Raw Mic
-                const stream = await navigator.mediaDevices.getUserMedia({ 
-                    audio: { 
-                        echoCancellation: false, 
-                        noiseSuppression: false, 
-                        autoGainControl: false 
-                    } 
-                });
+            recognition.continuous = true;
+            recognition.interimResults = true;
+            recognition.lang = 'en-US'; // Change to 'si-LK' for Sinhala if needed
 
-                // Step 2: Set up the 5000% Digital Pre-Amp
-                aCtx = new (window.AudioContext || window.webkitAudioContext)();
-                const source = aCtx.createMediaStreamSource(stream);
-                gainNode = aCtx.createGain();
-                analyzer = aCtx.createAnalyser();
+            recognition.onstart = () => {
+                document.getElementById('status-text').innerHTML = `<span class="pulse-icon"></span> LISTENING...`;
+            };
 
-                gainNode.gain.value = 50.0; // Nuclear sensitivity
-                source.connect(gainNode);
-                gainNode.connect(analyzer);
-
-                startVisualizer();
-
-                // Step 3: Initialize Speech Engine
-                const SpeechRef = window.SpeechRecognition || window.webkitSpeechRecognition;
-                if (!SpeechRef) return alert("Browser not supported!");
-
-                recognition = new SpeechRef();
-                recognition.continuous = true;
-                recognition.interimResults = true;
-                recognition.lang = document.getElementById('langChoice').value;
-
-                recognition.onresult = (event) => {
-                    let interim = "";
-                    for (let i = event.resultIndex; i < event.results.length; ++i) {
-                        if (event.results[i].isFinal) {
-                            finalLog += event.results[i][0].transcript + " ";
-                        } else {
-                            interim += event.results[i][0].transcript;
-                        }
+            recognition.onresult = (event) => {
+                let interim_transcript = "";
+                for (let i = event.resultIndex; i < event.results.length; ++i) {
+                    if (event.results[i].isFinal) {
+                        final_transcript += event.results[i][0].transcript + " ";
+                    } else {
+                        interim_transcript += event.results[i][0].transcript;
                     }
-                    const box = document.getElementById('display-box');
-                    box.innerHTML = finalLog + '<span class="temp-text">' + interim + '</span>';
-                    box.scrollTop = box.scrollHeight;
+                }
+                
+                // Keep the previous text and show the live results in a different shade
+                document.getElementById('transcript').innerHTML = 
+                    final_transcript + '<span style="color: #818cf8; opacity: 0.7">' + interim_transcript + '</span>';
+                
+                // Auto scroll
+                const box = document.getElementById('transcript');
+                box.scrollTop = box.scrollHeight;
+            };
+
+            recognition.onend = () => {
+                // The Magic: If user hasn't pressed stop, restart it immediately!
+                if (isRecording) {
+                    recognition.start();
+                    console.log("Restarting for Persistence...");
+                } else {
+                    document.getElementById('status-text').innerText = "Status: STOPPED";
+                }
+            };
+
+            recognition.onerror = (e) => {
+                console.log("Recognition error: " + e.error);
+                if (e.error === 'no-speech' && isRecording) {
+                    // Silently ignore and it will restart on onend
+                }
+            };
+        }
+
+        function handleMainAction() {
+            const btn = document.getElementById('main-btn');
+            const btnText = document.getElementById('btn-text');
+            const btnIcon = document.getElementById('btn-icon');
+            const transcriptDiv = document.getElementById('transcript');
+
+            if (!isRecording) {
+                // START
+                isRecording = true;
+                if(final_transcript === "") transcriptDiv.innerText = "";
+                recognition.start();
+                btn.className = "btn btn-stop";
+                btnText.innerText = "Stop Session";
+                btnIcon.innerText = "🛑";
+            } else {
+                // STOP
+                isRecording = false;
+                recognition.stop();
+                btn.className = "btn btn-start";
+                btnText.innerText = "Start Session";
+                btnIcon.innerText = "🎤";
+            }
+        }
+
+        function toggleEdit() {
+            const div = document.getElementById('transcript');
+            const btnText = document.getElementById('edit-text');
+            const icon = document.getElementById('edit-icon');
+            const box = document.getElementById('output-box');
+
+            isEditing = !isEditing;
+            div.contentEditable = isEditing;
+            
+            if (isEditing) {
+                box.classList.add('editing');
+                btnText.innerText = "Save";
+                icon.innerText = "💾";
+                div.focus();
+            } else {
+                box.classList.remove('editing');
+                btnText.innerText = "Edit";
+                icon.innerText = "✏️";
+                // Sync the manual edits back to our global buffer
+                final_transcript = div.innerText.trim() + " ";
+            }
+        }
+
+        function saveAsPDF() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            const text = document.getElementById('transcript').innerText;
+            
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(22);
+            doc.setTextColor(99, 102, 241);
+            doc.text("Lecture Transcript", 20, 20);
+            
+            doc.setFontSize(10);
+            doc.setTextColor(150);
+            doc.text("Generated by FCBS Smart Tool | " + new Date().toLocaleString(), 20, 30);
+            
+            doc.line(20, 35, 190, 35);
+            
+            doc.setFont("helvetica", "normal");
+            doc.setFontSize(12);
+            doc.setTextColor(40);
+            
+            const splitText = doc.splitTextToSize(text, 170);
+            doc.text(splitText, 20, 45);
+            
+            doc.save("FCBS_Lecture_Note.pdf");
+        }
+    </script>
+</body>
+</html>
                 };
 
                 recognition.onerror = (e) => {
