@@ -3,157 +3,133 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FCBS Perfect Transcribe</title>
+    <title>FCBS SUPERSENSE | DIGI SOLUTIONS</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
-        body { background: #000; color: #fff; font-family: sans-serif; display: flex; justify-content: center; padding: 20px; }
-        .container { width: 100%; max-width: 800px; }
+        :root { --p: #6366f1; --bg: #020617; --card: #0f172a; }
+        body { margin: 0; background: var(--bg); color: #fff; font-family: 'Inter', sans-serif; display: flex; justify-content: center; }
+        .container { width: 95%; max-width: 800px; padding: 20px; }
+        .card { background: var(--card); border: 1px solid #1e293b; border-radius: 24px; padding: 25px; box-shadow: 0 20px 50px rgba(0,0,0,0.5); }
+        
+        /* Volume Meter */
+        .meter { height: 8px; background: #1e293b; border-radius: 4px; margin: 15px 0; overflow: hidden; }
+        #fill { height: 100%; width: 0%; background: linear-gradient(90deg, #6366f1, #a855f7); transition: 0.1s; }
+
         #output { 
-            background: #111; border: 1px solid #333; padding: 20px; min-height: 400px; 
-            border-radius: 10px; font-size: 20px; line-height: 1.6; white-space: pre-wrap; 
+            background: #020617; border: 1px solid #1e293b; border-radius: 15px; padding: 20px; 
+            min-height: 450px; font-size: 22px; line-height: 1.7; color: #e2e8f0; 
+            overflow-y: auto; white-space: pre-wrap; outline: none;
         }
-        .controls { display: flex; gap: 10px; margin-top: 10px; }
-        button { padding: 15px; flex: 1; cursor: pointer; border: none; border-radius: 5px; font-weight: bold; }
-        .start { background: #28a745; color: #fff; }
-        .stop { background: #dc3545; color: #fff; }
-        .clear { background: #6c757d; color: #fff; }
+        .interim { color: #818cf8; opacity: 0.6; font-style: italic; }
+
+        .btns { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 10px; margin-top: 20px; }
+        .btn { padding: 18px; border-radius: 12px; border: none; font-weight: 800; cursor: pointer; color: #fff; transition: 0.2s; }
+        .start { background: var(--p); }
+        .stop { background: #ef4444; }
+        .clear { background: #334155; }
+        .btn:active { transform: scale(0.98); }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h2>Perfect Transcribe (Zero Duplication)</h2>
-    <div id="output">Press START to begin...</div>
-    <div class="controls">
-        <button id="btn" class="start" onclick="toggle()">START</button>
-        <button class="clear" onclick="clearText()">CLEAR</button>
+    <div class="card">
+        <h2 style="margin:0; font-weight:900;">FCBS <span style="color:var(--p)">SUPERSENSE</span></h2>
+        <p style="font-size:11px; color:#64748b; margin-bottom: 20px;">DIGI SOLUTIONS | PERSISTENCE MODE V3.0</p>
+        
+        <div class="meter"><div id="fill"></div></div>
+
+        <div id="output" contenteditable="true">Ready. Tap 'START' to capture voice...</div>
+
+        <div class="btns">
+            <button id="mainBtn" class="btn start" onclick="toggle()">🎤 START</button>
+            <button class="btn clear" onclick="clearText()">🗑️ CLEAR</button>
+            <button class="btn" style="background:#1e293b" onclick="location.reload()">🔄 RESET</button>
+        </div>
+        <p id="st" style="text-align:center; font-size:10px; color:#475569; margin-top:15px;">STATUS: STANDBY</p>
     </div>
 </div>
 
 <script>
-    let recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
-    let isRunning = false;
-    let final_transcript = ''; // මෙතන තමයි confirmed වචන ටික තියෙන්නේ
+    let rec;
+    let running = false;
+    let final_script = "";
+    let aCtx, anlyzr;
 
-    recognition.continuous = true;
-    recognition.interimResults = true;
-    recognition.lang = 'en-US'; 
+    if ('webkitSpeechRecognition' in window) {
+        rec = new webkitSpeechRecognition();
+        rec.continuous = true;
+        rec.interimResults = true;
+        rec.lang = 'en-US';
 
-    recognition.onresult = (event) => {
-        let interim_transcript = '';
-        
-        // Loop එකේදී අලුත් දත්ත විතරක් වෙන් කරගන්නවා
-        for (let i = event.resultIndex; i < event.results.length; ++i) {
-            if (event.results[i].isFinal) {
-                // සර්ව සම්පූර්ණ වචන මෙතනට එනවා
-                final_transcript += event.results[i][0].transcript + ' ';
-            } else {
-                // තාම ටයිප් වෙන ගමන් තියෙන ඒවා මෙතනට එනවා
-                interim_transcript += event.results[i][0].transcript;
+        rec.onresult = (e) => {
+            let interim = "";
+            // Clear current view and rebuild to prevent duplication
+            for (let i = e.resultIndex; i < e.results.length; ++i) {
+                if (e.results[i].isFinal) {
+                    final_script += e.results[i][0].transcript + " ";
+                } else {
+                    interim += e.results[i][0].transcript;
+                }
             }
-        }
-        
-        // display එකට යවන්නේ confirmed ටිකයි + අලුතින් එන interim ටිකයි විතරයි
-        document.getElementById('output').innerText = final_transcript + interim_transcript;
-    };
+            document.getElementById('output').innerHTML = final_script + '<span class="interim">' + interim + '</span>';
+            const b = document.getElementById('output');
+            b.scrollTop = b.scrollHeight;
+        };
 
-    function toggle() {
-        if (!isRunning) {
-            final_transcript = ''; // අලුතින් පටන් ගන්නකොට කලින් ටික මකනවා
-            recognition.start();
-            isRunning = true;
-            document.getElementById('btn').innerText = "STOP";
-            document.getElementById('btn').className = "stop";
+        rec.onend = () => { if(running) rec.start(); };
+    }
+
+    async function toggle() {
+        const b = document.getElementById('mainBtn');
+        if (!running) {
+            try {
+                // High Gain Raw Audio Setup
+                const s = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: true } });
+                aCtx = new AudioContext();
+                anlyzr = aCtx.createAnalyser();
+                const src = aCtx.createMediaStreamSource(s);
+                const g = aCtx.createGain();
+                g.gain.value = 30; // Boost sensitivity
+                src.connect(g); g.connect(anlyzr);
+                
+                mLoop();
+                if(document.getElementById('output').innerText.includes("Ready")) {
+                    document.getElementById('output').innerHTML = "";
+                    final_script = "";
+                }
+                
+                rec.start();
+                running = true;
+                b.innerText = "🛑 STOP";
+                b.className = "btn stop";
+                document.getElementById('st').innerText = "STATUS: LISTENING (HIGH SENSE)";
+            } catch (err) { alert("Mic Access Denied!"); }
         } else {
-            recognition.stop();
-            isRunning = false;
-            document.getElementById('btn').innerText = "START";
-            document.getElementById('btn').className = "start";
+            running = false;
+            rec.stop();
+            if(aCtx) aCtx.close();
+            b.innerText = "🎤 START";
+            b.className = "btn start";
+            document.getElementById('st').innerText = "STATUS: STOPPED";
         }
+    }
+
+    function mLoop() {
+        if(!running) return;
+        const d = new Uint8Array(anlyzr.frequencyBinCount);
+        anlyzr.getByteFrequencyData(d);
+        let sum = 0;
+        for(let i=0; i<d.length; i++) sum += d[i];
+        let v = Math.min((sum / d.length) * 5, 100);
+        document.getElementById('fill').style.width = v + "%";
+        requestAnimationFrame(mLoop);
     }
 
     function clearText() {
-        final_transcript = '';
-        document.getElementById('output').innerText = "";
-    }
-    
-    // Auto restart if it stops unexpectedly
-    recognition.onend = () => { if(isRunning) recognition.start(); };
-</script>
-
-</body>
-</html>
-        recognition.onend = () => {
-            if (isRecording) {
-                recognition.start(); // Auto-restart for continuous lectures
-            } else {
-                document.getElementById('status').innerText = "Status: Stopped";
-            }
-        };
-
-        recognition.onerror = (e) => {
-            console.error("Error:", e.error);
-            if (e.error === 'network') alert("Network error! Check your connection.");
-        };
-    }
-
-    function toggleRecording() {
-        const btn = document.getElementById('main-btn');
-        const box = document.getElementById('display-container');
-
-        if (!isRecording) {
-            isRecording = true;
-            if (final_script === "") box.innerText = "";
-            recognition.start();
-            btn.className = "btn btn-stop";
-            document.getElementById('btn-text').innerText = "Stop";
-            document.getElementById('icon').innerText = "🛑";
-        } else {
-            isRecording = false;
-            recognition.stop();
-            btn.className = "btn btn-start";
-            document.getElementById('btn-text').innerText = "Start";
-            document.getElementById('icon').innerText = "🎤";
-        }
-    }
-
-    function toggleEdit() {
-        const box = document.getElementById('display-container');
-        isEditing = !isEditing;
-        box.contentEditable = isEditing;
-        
-        if (isEditing) {
-            box.style.borderColor = "#6366f1";
-            box.focus();
-        } else {
-            box.style.borderColor = "rgba(255,255,255,0.1)";
-            final_script = box.innerText + " "; // Sync edits back to engine
-        }
-    }
-
-    function clearAll() {
-        if (confirm("Are you sure you want to clear the text?")) {
-            final_script = "";
-            document.getElementById('display-container').innerHTML = "";
-        }
-    }
-
-    function exportPDF() {
-        const { jsPDF } = window.jspdf;
-        const doc = new jsPDF();
-        const content = document.getElementById('display-container').innerText;
-
-        doc.setFont("helvetica", "bold");
-        doc.text("FCBS LECTURE NOTES", 20, 20);
-        doc.setFontSize(10);
-        doc.text("Date: " + new Date().toLocaleString(), 20, 30);
-        doc.line(20, 35, 190, 35);
-        
-        doc.setFont("helvetica", "normal");
-        const splitText = doc.splitTextToSize(content, 170);
-        doc.text(splitText, 20, 45);
-        doc.save("FCBS_Notes.pdf");
+        final_script = "";
+        document.getElementById('output').innerHTML = "";
     }
 </script>
-
 </body>
 </html>
