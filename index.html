@@ -3,136 +3,85 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FCBS Turbo Transcribe | Digi Solutions</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;900&display=swap" rel="stylesheet">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <title>FCBS Perfect Transcribe</title>
     <style>
-        :root {
-            --bg: #030712;
-            --primary: #6366f1;
-            --danger: #ef4444;
-            --success: #10b981;
-            --card: rgba(255, 255, 255, 0.02);
-            --border: rgba(255, 255, 255, 0.1);
+        body { background: #000; color: #fff; font-family: sans-serif; display: flex; justify-content: center; padding: 20px; }
+        .container { width: 100%; max-width: 800px; }
+        #output { 
+            background: #111; border: 1px solid #333; padding: 20px; min-height: 400px; 
+            border-radius: 10px; font-size: 20px; line-height: 1.6; white-space: pre-wrap; 
         }
-
-        body {
-            margin: 0; background: var(--bg); color: #f8fafc;
-            font-family: 'Inter', sans-serif; display: flex; justify-content: center;
-            min-height: 100vh;
-        }
-
-        .container { width: 95%; max-width: 800px; padding: 40px 10px; }
-
-        .glass-card {
-            background: var(--card); backdrop-filter: blur(20px);
-            border: 1px solid var(--border); border-radius: 24px;
-            padding: 30px; box-shadow: 0 25px 50px rgba(0,0,0,0.5);
-        }
-
-        .header h1 { font-size: 28px; margin: 0; font-weight: 900; letter-spacing: -1px; }
-        .gradient-text { background: linear-gradient(90deg, #818cf8, #c084fc); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-
-        /* Output Box */
-        #display-container {
-            background: rgba(0,0,0,0.3); border: 1px solid var(--border);
-            border-radius: 18px; padding: 20px; min-height: 350px; max-height: 500px;
-            margin: 25px 0; overflow-y: auto; font-size: 19px; line-height: 1.7;
-            white-space: pre-wrap; position: relative;
-        }
-
-        .interim-text { color: #818cf8; opacity: 0.8; font-style: italic; }
-
-        /* Controls Grid */
-        .grid { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 10px; }
-
-        .btn {
-            padding: 15px; border-radius: 14px; border: none; font-weight: 700;
-            cursor: pointer; transition: 0.2s; color: white; display: flex; align-items: center; justify-content: center; gap: 8px;
-        }
-
-        .btn-start { background: var(--primary); }
-        .btn-stop { background: var(--danger); }
-        .btn-pdf { background: var(--success); }
-        .btn-clear { background: #334155; }
-        .btn-edit { background: #1e293b; }
-
-        .btn:hover { filter: brightness(1.2); transform: translateY(-2px); }
-        .btn:active { transform: scale(0.95); }
-
-        .status-bar { display: flex; justify-content: space-between; font-size: 11px; color: #64748b; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 1px; }
-        
-        .recording-pulse { width: 8px; height: 8px; background: var(--danger); border-radius: 50%; display: inline-block; animation: pulse 1s infinite; margin-right: 5px; }
-        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.3; } 100% { opacity: 1; } }
-
-        footer { text-align: center; margin-top: 30px; font-size: 11px; color: #475569; }
+        .controls { display: flex; gap: 10px; margin-top: 10px; }
+        button { padding: 15px; flex: 1; cursor: pointer; border: none; border-radius: 5px; font-weight: bold; }
+        .start { background: #28a745; color: #fff; }
+        .stop { background: #dc3545; color: #fff; }
+        .clear { background: #6c757d; color: #fff; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <div class="glass-card">
-        <div class="header">
-            <h1>FCBS <span class="gradient-text">Turbo Transcribe</span></h1>
-            <p style="font-size: 12px; color: #64748b; margin: 5px 0;">DIGI SOLUTIONS | HIGH-SPEED ENGINE V2.0</p>
-        </div>
-
-        <div class="status-bar">
-            <span id="status">Status: Idle</span>
-            <span id="mode">Mode: Precision</span>
-        </div>
-
-        <div id="display-container" contenteditable="false">Your transcript will appear here. Press Start...</div>
-
-        <div class="grid">
-            <button id="main-btn" class="btn btn-start" onclick="toggleRecording()">
-                <span id="icon">🎤</span> <span id="btn-text">Start</span>
-            </button>
-            <button class="btn btn-edit" onclick="toggleEdit()">✏️ Edit</button>
-            <button class="btn btn-clear" onclick="clearAll()">🗑️ Clear</button>
-            <button class="btn btn-pdf" onclick="exportPDF()">📄 PDF</button>
-        </div>
+    <h2>Perfect Transcribe (Zero Duplication)</h2>
+    <div id="output">Press START to begin...</div>
+    <div class="controls">
+        <button id="btn" class="start" onclick="toggle()">START</button>
+        <button class="clear" onclick="clearText()">CLEAR</button>
     </div>
-    <footer>© 2026 Digi Solutions | Developed for FCBS IS Students</footer>
 </div>
 
 <script>
-    let recognition;
-    let isRecording = false;
-    let isEditing = false;
-    let final_script = "";
+    let recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+    let isRunning = false;
+    let final_transcript = ''; // මෙතන තමයි confirmed වචන ටික තියෙන්නේ
 
-    if (!('webkitSpeechRecognition' in window)) {
-        alert("Mchn, use Chrome for the best experience!");
-    } else {
-        recognition = new webkitSpeechRecognition();
-        recognition.continuous = true;
-        recognition.interimResults = true;
-        recognition.lang = 'en-US';
+    recognition.continuous = true;
+    recognition.interimResults = true;
+    recognition.lang = 'en-US'; 
 
-        recognition.onstart = () => {
-            document.getElementById('status').innerHTML = `<span class="recording-pulse"></span> RECORDING LIVE`;
-        };
-
-        recognition.onresult = (event) => {
-            let interim_script = "";
-            
-            // We rebuild the view from the results list to prevent duplication
-            for (let i = event.resultIndex; i < event.results.length; ++i) {
-                const transcript = event.results[i][0].transcript;
-                // Accuracy check: Only accept if the engine is reasonably sure
-                if (event.results[i].isFinal) {
-                    final_script += transcript + " ";
-                } else {
-                    interim_script += transcript;
-                }
+    recognition.onresult = (event) => {
+        let interim_transcript = '';
+        
+        // Loop එකේදී අලුත් දත්ත විතරක් වෙන් කරගන්නවා
+        for (let i = event.resultIndex; i < event.results.length; ++i) {
+            if (event.results[i].isFinal) {
+                // සර්ව සම්පූර්ණ වචන මෙතනට එනවා
+                final_transcript += event.results[i][0].transcript + ' ';
+            } else {
+                // තාම ටයිප් වෙන ගමන් තියෙන ඒවා මෙතනට එනවා
+                interim_transcript += event.results[i][0].transcript;
             }
+        }
+        
+        // display එකට යවන්නේ confirmed ටිකයි + අලුතින් එන interim ටිකයි විතරයි
+        document.getElementById('output').innerText = final_transcript + interim_transcript;
+    };
 
-            const box = document.getElementById('display-container');
-            box.innerHTML = final_script + `<span class="interim-text">${interim_script}</span>`;
-            box.scrollTop = box.scrollHeight;
-        };
+    function toggle() {
+        if (!isRunning) {
+            final_transcript = ''; // අලුතින් පටන් ගන්නකොට කලින් ටික මකනවා
+            recognition.start();
+            isRunning = true;
+            document.getElementById('btn').innerText = "STOP";
+            document.getElementById('btn').className = "stop";
+        } else {
+            recognition.stop();
+            isRunning = false;
+            document.getElementById('btn').innerText = "START";
+            document.getElementById('btn').className = "start";
+        }
+    }
 
+    function clearText() {
+        final_transcript = '';
+        document.getElementById('output').innerText = "";
+    }
+    
+    // Auto restart if it stops unexpectedly
+    recognition.onend = () => { if(isRunning) recognition.start(); };
+</script>
+
+</body>
+</html>
         recognition.onend = () => {
             if (isRecording) {
                 recognition.start(); // Auto-restart for continuous lectures
