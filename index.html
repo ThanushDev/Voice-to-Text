@@ -3,110 +3,165 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FCBS SUPERSENSE RAW | FINAL</title>
+    <title>SUPERSENSE V12 | RAW AUDIO</title>
     <style>
-        body { margin: 0; background: #000; color: #fff; font-family: sans-serif; display: flex; justify-content: center; }
-        .container { width: 100%; max-width: 900px; padding: 20px; }
-        #output { 
-            background: #050505; border: 2px solid #333; border-radius: 15px; 
-            padding: 20px; min-height: 500px; font-size: 24px; line-height: 1.8; 
-            color: #fff; overflow-y: auto; white-space: pre-wrap;
+        :root { --accent: #00ff41; --bg: #050505; }
+        body { margin: 0; background: var(--bg); color: #fff; font-family: 'Segoe UI', Tahoma, sans-serif; display: flex; justify-content: center; }
+        .wrapper { width: 95%; max-width: 850px; padding: 25px; }
+        .main-card { background: #0a0a0a; border: 1px solid #1a1a1a; border-radius: 25px; padding: 30px; box-shadow: 0 0 60px rgba(0, 255, 65, 0.05); }
+        
+        /* High-Gain Meter */
+        .meter-container { height: 12px; background: #111; border-radius: 10px; margin: 20px 0; overflow: hidden; border: 1px solid #222; }
+        #fill { height: 100%; width: 0%; background: linear-gradient(90deg, #008f11, var(--accent)); box-shadow: 0 0 15px var(--accent); transition: width 0.05s ease; }
+
+        #display-box { 
+            background: #000; border: 1px solid #111; border-radius: 15px; padding: 25px; 
+            min-height: 480px; font-size: 22px; line-height: 1.8; color: #e0e0e0; 
+            overflow-y: auto; white-space: pre-wrap; outline: none; border-left: 4px solid #1a1a1a;
         }
-        .live-text { color: #00ff00; font-weight: bold; }
-        .controls { display: flex; gap: 10px; margin-top: 20px; }
-        button { padding: 20px; flex: 1; border: none; border-radius: 10px; font-size: 18px; font-weight: bold; cursor: pointer; }
-        .start { background: #00ff00; color: #000; }
-        .stop { background: #ff0000; color: #fff; }
-        .meter { height: 10px; background: #222; margin: 10px 0; border-radius: 5px; }
-        #bar { height: 100%; width: 0%; background: #00ff00; transition: width 0.05s; }
+        .temp-text { color: var(--accent); font-style: italic; border-right: 2px solid var(--accent); }
+
+        .controls { display: grid; grid-template-columns: 2fr 1fr; gap: 15px; margin-top: 25px; }
+        .btn { padding: 20px; border-radius: 15px; border: none; font-weight: 900; cursor: pointer; text-transform: uppercase; transition: 0.2s; }
+        .btn-start { background: var(--accent); color: #000; }
+        .btn-reset { background: #111; color: #fff; border: 1px solid #222; }
+        .btn:active { transform: scale(0.98); }
+        
+        select { background: #111; color: var(--accent); border: 1px solid #222; padding: 12px; border-radius: 10px; width: 100%; margin-bottom: 15px; cursor: pointer; }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <h2>FCBS SUPERSENSE (1000% RAW MODE)</h2>
-    <div class="meter"><div id="bar"></div></div>
-    <select id="lang" style="width: 100%; padding: 10px; background: #222; color: #fff; border-radius: 5px;">
-        <option value="en-US">English (US)</option>
-        <option value="si-LK">Sinhala (Sri Lanka)</option>
-    </select>
-    
-    <div id="output">SYSTEM READY. CLICK START...</div>
-    
-    <div class="controls">
-        <button id="btn" class="start" onclick="startApp()">START ENGINE</button>
-        <button onclick="location.reload()" style="background:#444; color:#fff;">RESET</button>
+<div class="wrapper">
+    <div class="main-card">
+        <h1 style="margin:0; font-size: 24px; letter-spacing: -1px;">RAW <span style="color:var(--accent)">SUPERSENSE</span> V12</h1>
+        <p style="font-size: 10px; color: #444; margin-bottom: 20px;">GAIN: 50.0 (5000%) | FILTERS: DISABLED | STATUS: <span id="status-tag" style="color:#555">READY</span></p>
+
+        <div class="meter-container"><div id="fill"></div></div>
+
+        <select id="langChoice">
+            <option value="en-US">Target: English Lecture</option>
+            <option value="si-LK">Target: Sinhala Lecture</option>
+        </select>
+
+        <div id="display-box" contenteditable="true">Engine Standby. Tap 'START' to ignite...</div>
+
+        <div class="controls">
+            <button id="masterBtn" class="btn btn-start" onclick="igniteEngine()">🎤 Start Engine</button>
+            <button class="btn btn-reset" onclick="location.reload()">🔄 Reset</button>
+        </div>
     </div>
 </div>
 
 <script>
-    let rec;
-    let isRunning = false;
-    let finalTranscript = "";
+    let recognition;
+    let isActive = false;
+    let finalLog = "";
+    let aCtx, analyzer, gainNode;
 
-    async function startApp() {
-        if (!isRunning) {
-            // 1. Raw Audio Access (No filters)
-            const stream = await navigator.mediaDevices.getUserMedia({ 
-                audio: { 
-                    echoCancellation: false, 
-                    noiseSuppression: false, 
-                    autoGainControl: false,
-                    latency: 0
-                } 
-            });
+    async function igniteEngine() {
+        const btn = document.getElementById('masterBtn');
+        const status = document.getElementById('status-tag');
 
-            // 2. Audio Visualizer Setup
-            const ctx = new AudioContext();
-            const analyzer = ctx.createAnalyser();
-            const source = ctx.createMediaStreamSource(stream);
-            source.connect(analyzer);
-            
-            // 3. Speech Recognition Engine
-            rec = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
-            rec.continuous = true;
-            rec.interimResults = true;
-            rec.lang = document.getElementById('lang').value;
+        if (!isActive) {
+            try {
+                // Step 1: Force Request Raw Mic
+                const stream = await navigator.mediaDevices.getUserMedia({ 
+                    audio: { 
+                        echoCancellation: false, 
+                        noiseSuppression: false, 
+                        autoGainControl: false 
+                    } 
+                });
 
-            rec.onresult = (e) => {
-                let interim = "";
-                for (let i = e.resultIndex; i < e.results.length; ++i) {
-                    if (e.results[i].isFinal) finalTranscript += e.results[i][0].transcript + " ";
-                    else interim += e.results[i][0].transcript;
+                // Step 2: Set up the 5000% Digital Pre-Amp
+                aCtx = new (window.AudioContext || window.webkitAudioContext)();
+                const source = aCtx.createMediaStreamSource(stream);
+                gainNode = aCtx.createGain();
+                analyzer = aCtx.createAnalyser();
+
+                gainNode.gain.value = 50.0; // Nuclear sensitivity
+                source.connect(gainNode);
+                gainNode.connect(analyzer);
+
+                startVisualizer();
+
+                // Step 3: Initialize Speech Engine
+                const SpeechRef = window.SpeechRecognition || window.webkitSpeechRecognition;
+                if (!SpeechRef) return alert("Browser not supported!");
+
+                recognition = new SpeechRef();
+                recognition.continuous = true;
+                recognition.interimResults = true;
+                recognition.lang = document.getElementById('langChoice').value;
+
+                recognition.onresult = (event) => {
+                    let interim = "";
+                    for (let i = event.resultIndex; i < event.results.length; ++i) {
+                        if (event.results[i].isFinal) {
+                            finalLog += event.results[i][0].transcript + " ";
+                        } else {
+                            interim += event.results[i][0].transcript;
+                        }
+                    }
+                    const box = document.getElementById('display-box');
+                    box.innerHTML = finalLog + '<span class="temp-text">' + interim + '</span>';
+                    box.scrollTop = box.scrollHeight;
+                };
+
+                recognition.onerror = (e) => {
+                    console.log("Engine Error: " + e.error);
+                    if (e.error === 'network') status.innerText = "OFFLINE!";
+                };
+
+                // Auto-Restart Logic
+                recognition.onend = () => { if (isActive) recognition.start(); };
+
+                recognition.start();
+                isActive = true;
+                btn.innerText = "🛑 Stop Engine";
+                btn.style.background = "#ff4141";
+                status.innerText = "LISTENING (ACTIVE)";
+                status.style.color = "#00ff41";
+                
+                if(document.getElementById('display-box').innerText.includes("Engine Standby")) {
+                    document.getElementById('display-box').innerHTML = "";
                 }
-                document.getElementById('output').innerHTML = finalTranscript + '<span class="live-text">' + interim + '</span>';
-                document.getElementById('output').scrollTop = document.getElementById('output').scrollHeight;
-            };
 
-            rec.onend = () => { if(isRunning) rec.start(); };
-            
-            rec.start();
-            isRunning = true;
-            document.getElementById('btn').innerText = "STOP ENGINE";
-            document.getElementById('btn').className = "stop";
-
-            // Visualizer Loop
-            function draw() {
-                if(!isRunning) return;
-                let data = new Uint8Array(analyzer.frequencyBinCount);
-                analyzer.getByteFrequencyData(data);
-                let vol = data.reduce((a,b) => a+b) / data.length;
-                document.getElementById('bar').style.width = Math.min(vol * 5, 100) + "%";
-                requestAnimationFrame(draw);
+            } catch (err) {
+                alert("Please Allow Mic Permission!");
+                console.error(err);
             }
-            draw();
-
         } else {
-            isRunning = false;
-            rec.stop();
-            document.getElementById('btn').innerText = "START ENGINE";
-            document.getElementById('btn').className = "start";
+            // Stop logic
+            isActive = false;
+            recognition.stop();
+            if (aCtx) aCtx.close();
+            btn.innerText = "🎤 Start Engine";
+            btn.style.background = "#00ff41";
+            status.innerText = "STOPPED";
+            status.style.color = "#555";
         }
     }
+
+    function startVisualizer() {
+        if (!isActive) return;
+        const data = new Uint8Array(analyzer.frequencyBinCount);
+        const loop = () => {
+            if (!isActive) return;
+            analyzer.getByteFrequencyData(data);
+            let sum = 0;
+            for (let i = 0; i < data.length; i++) sum += data[i];
+            let level = (sum / data.length) * 4; 
+            document.getElementById('fill').style.width = Math.min(level, 100) + "%";
+            requestAnimationFrame(loop);
+        };
+        loop();
+    }
 </script>
+
 </body>
 </html>
-                isActive = true;
                 btn.innerText = "Nuclear Active";
                 btn.className = "btn stop";
                 if(document.getElementById('output').innerText.includes("STANDBY")) document.getElementById('output').innerHTML = "";
